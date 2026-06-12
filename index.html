@@ -172,16 +172,22 @@
   .map-chip:hover{border-color:var(--blue);color:var(--blue)}
   .map-chip.here{background:var(--blue);color:#0b0c10;border-color:var(--blue);font-weight:700}
   .map-chip.here:after{content:" · 지금";font-size:10px;font-family:var(--mono)}
-  /* 가로형 지도 */
-  .map-tree.hmap{display:flex;flex-direction:column;gap:8px;overflow:auto;padding:4px 2px 8px;max-height:240px}
+  /* 가로형 지도 — 파일트리식 커넥터(상단정렬·연속 줄기·막내 트림) */
+  .map-tree.hmap{display:block;overflow:auto;padding:6px 2px 8px;max-height:240px}
   .map-tree.hmap::-webkit-scrollbar{height:7px;width:7px}.map-tree.hmap::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
-  .hnode{display:flex;align-items:center}
-  .hnode>.map-chip{flex:none;white-space:nowrap}
-  .hkids{display:flex;flex-direction:column;gap:8px;margin-left:16px;padding-left:16px;
-    border-left:1px solid var(--line);position:relative}
-  .hkids:before{content:"";position:absolute;top:50%;left:-16px;width:16px;height:1px;background:var(--line)}
-  .hnode .hnode{position:relative}
-  .hnode .hnode:before{content:"";position:absolute;left:-16px;top:50%;width:16px;height:1px;background:var(--line)}
+  .hnode{display:flex;align-items:flex-start}
+  .hnode>.map-chip{flex:none;white-space:nowrap;margin:3px 0}
+  .hkids{display:block;margin-left:18px;position:relative}
+  .hkids>.hnode{position:relative}
+  /* 세로 줄기: 자식 전체 높이를 지나 연속 */
+  .hkids>.hnode:before{content:"";position:absolute;left:-9px;top:0;bottom:0;width:1px;background:var(--line)}
+  .hkids>.hnode:first-child:before{top:16px}
+  .hkids>.hnode:last-child:before{bottom:auto;top:0;height:16px}
+  .hkids>.hnode:first-child:last-child:before{display:none}
+  /* 가로 가지: 줄기 → 칩 중앙(상단 16px) */
+  .hkids>.hnode:after{content:"";position:absolute;left:-9px;top:16px;width:9px;height:1px;background:var(--line)}
+  /* 부모 칩 → 줄기 연결 */
+  .hnode>.hkids:before{content:"";position:absolute;left:-18px;top:16px;width:9px;height:1px;background:var(--line)}
   /* next act */
   .next-act{max-width:680px;margin:22px auto 0}
   .next-act button{width:100%;background:linear-gradient(180deg,var(--accent),#8e2f23);border:1px solid #d8483a;
