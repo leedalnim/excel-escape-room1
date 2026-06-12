@@ -94,6 +94,9 @@
   .topbar button{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--ink-dim);
     background:none;border:1px solid var(--line);padding:6px 12px;border-radius:3px;cursor:pointer;transition:.2s}
   .topbar button:hover{color:var(--ink);border-color:var(--ink-dim)}
+  .progress{height:4px;background:var(--line);position:relative;overflow:hidden;flex:none}
+  .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--gold));
+    box-shadow:0 0 8px rgba(207,166,78,.4);transition:width .55s cubic-bezier(.3,.7,.3,1)}
 
   .scroll{flex:1;overflow-y:auto;padding:46px 8% 30px;scroll-behavior:smooth}
   .scroll::-webkit-scrollbar{width:8px}.scroll::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
@@ -398,6 +401,7 @@
       <button onclick="Game.undo()">↩ 돌아가기</button>
       <button onclick="Game.home()">처음으로</button>
     </div>
+    <div class="progress" title="진행률"><div class="progress-fill" id="progressFill"></div></div>
     <div class="scroll" id="scroll"></div>
     <div class="composer">
       <div class="row">
@@ -1130,7 +1134,11 @@ const Game = {
     document.getElementById('modal').classList.add('on'); },
 
   updateStep(){ const i=ACT_ORDER.indexOf(this.act);
-    document.getElementById('stepInfo').textContent=(i>=0?(i+1):1)+'/'+ACT_ORDER.length+'화 · 단계 '+(this.level+1);
+    const maxL=(this.data&&this.data.levels?this.data.levels.length:1);
+    const within=maxL>1?Math.min(1,this.level/(maxL-1)):(this.level>0?1:0);
+    const pct=Math.round(Math.min(1,((i>=0?i:0)+within)/ACT_ORDER.length)*100);
+    document.getElementById('stepInfo').textContent=(i>=0?(i+1):1)+'/'+ACT_ORDER.length+'화 · 단계 '+(this.level+1)+' · '+pct+'%';
+    const pf=document.getElementById('progressFill'); if(pf) pf.style.width=pct+'%';
     this.renderViewpoint(); },
   lightning(){ const f=document.getElementById('flash'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); },
   esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
