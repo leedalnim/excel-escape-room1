@@ -708,6 +708,16 @@ const Game = {
         [...(und[cur]||[])].forEach(n=>{ if(visited.has(n)&&!seen.has(n)){ seen.add(n); parent[n]=cur; q.push(n); } });
       }
     });
+    // adj로 안 잡힌 곳(숨겨진 ? 진입 등)은 실제 이동기록(navigation parent)으로 연결
+    this.places.forEach(p=>{
+      if(p in parent) return;
+      const np=this.parents[p];
+      if(np && np!==p && visited.has(np)){
+        let a=np, guard=new Set([p]), ok=true;     // 사이클 방지
+        while(a!==undefined){ if(guard.has(a)){ ok=false; break; } guard.add(a); a=parent[a]; }
+        if(ok) parent[p]=np;
+      }
+    });
     const roots=this.places.filter(p=>!(p in parent));
     const kidsOf=p=>this.places.filter(c=>parent[c]===p);
     g.innerHTML=''; const tree=document.createElement('div'); tree.className='map-tree hmap';
@@ -1136,6 +1146,9 @@ document.getElementById('scroll').addEventListener('click',e=>{
   else Game.grabItem(b.dataset.code, b);
 });
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); Game.undo(); }});
+// 모달 바깥(배경) 클릭 시 닫기 + ESC로 닫기
+document.querySelectorAll('.modal').forEach(function(m){ m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('on'); }); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.querySelectorAll('.modal.on').forEach(function(m){ m.classList.remove('on'); }); });
 // 첫 화면 메뉴 초기화 (해금 챕터 / 이어서 하기 상태)
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=d;Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 </script>
