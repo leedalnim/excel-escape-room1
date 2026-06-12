@@ -172,8 +172,17 @@
   .map-chip:hover{border-color:var(--blue);color:var(--blue)}
   .map-chip.here{background:var(--blue);color:#0b0c10;border-color:var(--blue);font-weight:700}
   .map-chip.here:after{content:" · 지금";font-size:10px;font-family:var(--mono)}
+  /* 탐색 지도 사이드 요약 + 팝업 트리거 */
+  .map-summary{font-size:13px;color:var(--ink-dim);margin-bottom:10px;line-height:1.6}
+  .map-summary .here-now{color:var(--blue);font-weight:700}
+  .map-open{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--body);font-size:13px;padding:10px;border-radius:4px;cursor:pointer;transition:.2s}
+  .map-open:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px)}
+  .map-card{max-width:min(94vw,820px);width:auto}
+  .map-scroll{max-height:64vh;overflow:auto;margin:8px 0 4px;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
+  .map-scroll::-webkit-scrollbar{width:8px;height:8px}.map-scroll::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
   /* 가로형 지도 — 파일트리식 커넥터(상단정렬·연속 줄기·막내 트림) */
-  .map-tree.hmap{display:block;overflow:auto;padding:6px 2px 8px;max-height:240px}
+  .map-tree.hmap{display:block;overflow:auto;padding:6px 2px 8px}
   .map-tree.hmap::-webkit-scrollbar{height:7px;width:7px}.map-tree.hmap::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
   .hnode{display:flex;align-items:flex-start}
   .hnode>.map-chip{flex:none;white-space:nowrap;margin:3px 0}
@@ -403,7 +412,8 @@
   <aside class="aside" id="aside">
     <div class="sect" id="placeSect">
       <h4>탐색 지도 <span class="ct" id="placeCt">0</span></h4>
-      <div class="place-grid" id="placeGrid"><span class="inv-empty">아직 둘러본 곳이 없습니다</span></div>
+      <div class="map-summary" id="mapSummary"><span class="inv-empty">아직 둘러본 곳이 없습니다</span></div>
+      <button class="map-open" id="mapOpenBtn" onclick="Game.openMap()" style="display:none">🗺 지도 크게 보기</button>
     </div>
     <div class="sect">
       <h4>인벤토리 <span class="ct" id="invCt">0</span></h4>
@@ -468,6 +478,11 @@
 <div class="modal" id="letterModal"><div class="card letter-card">
   <div class="letter-paper lp-big" id="letterBody"></div>
   <button onclick="document.getElementById('letterModal').classList.remove('on')">덮기</button>
+</div></div>
+<div class="modal" id="mapModal"><div class="card map-card">
+  <h3>탐색 지도</h3><div class="ec" id="mapHere"></div>
+  <div class="map-scroll"><div id="mapBody"></div></div>
+  <button onclick="document.getElementById('mapModal').classList.remove('on')">닫기</button>
 </div></div>
 
 <script>
@@ -665,9 +680,19 @@ const Game = {
   expandPath(kw){ if(!this.expanded) this.expanded=new Set(); let p=kw, guard=new Set();
     while(p && !guard.has(p)){ guard.add(p); this.expanded.add(p); p=this.parents[p]; } },
   renderPlaces(){
-    const g=document.getElementById('placeGrid');
+    const g=document.getElementById('mapBody');
+    const summary=document.getElementById('mapSummary');
+    const btn=document.getElementById('mapOpenBtn');
     document.getElementById('placeCt').textContent=this.places.length;
-    if(!this.places.length){ g.innerHTML='<span class="inv-empty">아직 둘러본 곳이 없습니다</span>'; return; }
+    if(!this.places.length){
+      if(g) g.innerHTML='';
+      if(summary) summary.innerHTML='<span class="inv-empty">아직 둘러본 곳이 없습니다</span>';
+      if(btn) btn.style.display='none';
+      return;
+    }
+    if(btn) btn.style.display='block';
+    if(summary) summary.innerHTML='지금 위치 · <span class="here-now">'+this.esc(this.here||'-')+'</span><br>둘러본 곳 '+this.places.length+'곳';
+    const hereEl=document.getElementById('mapHere'); if(hereEl) hereEl.textContent='지금 · '+(this.here||'-');
     // 실제 연결관계(adj)를 양방향 그래프로 만들어 BFS → 형제가 같은 위계로 묶임
     const visited=new Set(this.places);
     const adj=this.adj||{};
@@ -702,6 +727,11 @@ const Game = {
     };
     roots.forEach(r=>tree.appendChild(render(r)));
     g.appendChild(tree);
+  },
+  openMap(){
+    if(!this.places.length) return;
+    this.renderPlaces();
+    document.getElementById('mapModal').classList.add('on');
   },
 
   // ----- 시트(자료) 채널 -----
