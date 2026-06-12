@@ -323,6 +323,16 @@
   .brk-sw{width:42px;height:30px;border-radius:5px;border:1px solid #4a4f5b;background:#23262e;
     color:#6a6f7b;font-family:var(--mono);font-size:10px;cursor:pointer;transition:.12s}
   .brk-sw.on{background:rgba(207,166,78,.2);border-color:var(--gold);color:var(--gold)}
+  .sec-rooms{display:flex;gap:16px;justify-content:center;margin-bottom:8px}
+  .sec-room{text-align:center}
+  .sec-label{font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-bottom:7px;letter-spacing:.08em}
+  .sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+  .sec-btn{width:34px;height:34px;border-radius:6px;background:#23262e;border:1px solid #3f4452;
+    color:var(--gold);font-size:14px;cursor:pointer;transition:.12s}
+  .sec-btn:hover{background:#2f3441}
+  .sec-btn.lit{background:rgba(207,166,78,.9);border-color:var(--gold);color:#1a1a1a;
+    animation:secpulse 1s ease infinite}
+  @keyframes secpulse{0%,100%{box-shadow:0 0 0 0 rgba(207,166,78,.6)}50%{box-shadow:0 0 0 6px rgba(207,166,78,0)}}
   /* ===== letterpaper ===== */
   .letter-paper{margin:18px 0 6px;background-color:#f2e9d0;color:#352b16;
     border:1px solid #cbbd97;border-radius:3px;padding:30px 34px;position:relative;
@@ -809,6 +819,7 @@ const Game = {
     if(key==='act4/126') return this.buildKeypadSheet('6577','키패드');
     if(key==='act4/39')  return this.buildController();
     if(key==='act3/82')  return this.buildBreaker();
+    if(key==='act5/93' || key==='act5/99') return this.buildSecurity();
     return null;
   },
   // ★ UP & DOWN 숫자 맞추기 게임 (act4 F시트)
@@ -900,6 +911,43 @@ const Game = {
         b.onclick=((R,C)=>()=>{ grid[R][C]^=1; update(); })(r,c); td.appendChild(b); tr.appendChild(td); }
       tbl.appendChild(tr); }
     w.appendChild(title); w.appendChild(status); w.appendChild(tbl); w.appendChild(result); update();
+    return w;
+  },
+  // 보안실 A·B (act5) — 두 방을 번갈아 누르는 교대 버튼 퍼즐
+  buildSecurity(){
+    const w=document.createElement('div'); w.className='mini-game';
+    const seq=[['A',4],['B',0],['A',2],['B',8],['A',6],['B',4],['A',1],['B',7]]; // 교대 시퀀스
+    let step=0;
+    const title=document.createElement('div'); title.className='mg-title'; title.textContent='🔐 보안실 A · B';
+    const status=document.createElement('div'); status.className='mg-status';
+    const result=document.createElement('div'); result.className='mg-result';
+    const wrap=document.createElement('div'); wrap.className='sec-rooms';
+    const btns={A:[],B:[]};
+    const mkRoom=(room)=>{
+      const box=document.createElement('div'); box.className='sec-room';
+      const lab=document.createElement('div'); lab.className='sec-label'; lab.textContent='보안실 '+room;
+      const grid=document.createElement('div'); grid.className='sec-grid';
+      for(let i=0;i<9;i++){ const b=document.createElement('button'); b.className='sec-btn'; b.textContent=i===4?'◉':'';
+        b.onclick=()=>press(room,i); grid.appendChild(b); btns[room].push(b); }
+      box.appendChild(lab); box.appendChild(grid); return box;
+    };
+    const highlight=()=>{
+      ['A','B'].forEach(r=>btns[r].forEach(b=>b.classList.remove('lit')));
+      if(step<seq.length){ const [r,p]=seq[step]; btns[r][p].classList.add('lit');
+        status.textContent=(step===0?'벨킨이 먼저 ':'')+'보안실 '+r+' 의 켜진 버튼을 누르세요. ('+(step+1)+'/'+seq.length+')'; }
+    };
+    const press=(room,pos)=>{
+      if(step>=seq.length) return;
+      const [r,p]=seq[step];
+      if(room===r && pos===p){ step++;
+        if(step>=seq.length){ ['A','B'].forEach(rr=>btns[rr].forEach(b=>b.classList.remove('lit')));
+          status.textContent=''; result.className='mg-result win'; result.textContent='✓ 마지막 보안 해제 완료! 기계장치가 작동합니다.'; }
+        else highlight();
+      } else { result.textContent='✗ 켜진 버튼을 눌러야 합니다.'; setTimeout(()=>{ if(step<seq.length) result.textContent=''; },900); }
+    };
+    wrap.appendChild(mkRoom('A')); wrap.appendChild(mkRoom('B'));
+    w.appendChild(title); w.appendChild(status); w.appendChild(wrap); w.appendChild(result);
+    highlight();
     return w;
   },
   // 시점 시스템 (act5): 분기 89(대화하기) 이후 등장
