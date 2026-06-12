@@ -172,6 +172,16 @@
   .map-chip:hover{border-color:var(--blue);color:var(--blue)}
   .map-chip.here{background:var(--blue);color:#0b0c10;border-color:var(--blue);font-weight:700}
   .map-chip.here:after{content:" · 지금";font-size:10px;font-family:var(--mono)}
+  /* 가로형 지도 */
+  .map-tree.hmap{display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+  .map-tree.hmap::-webkit-scrollbar{height:7px}.map-tree.hmap::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
+  .hnode{display:flex;align-items:center}
+  .hnode>.map-chip{flex:none;white-space:nowrap}
+  .hkids{display:flex;flex-direction:column;gap:6px;margin-left:14px;padding-left:14px;
+    border-left:1px solid var(--line);position:relative}
+  .hkids:before{content:"";position:absolute;left:0;top:50%;width:8px;height:1px;background:var(--line);transform:translateX(-8px)}
+  .hnode .hnode{position:relative}
+  .hnode .hnode:before{content:"";position:absolute;left:-14px;top:50%;width:14px;height:1px;background:var(--line)}
   /* next act */
   .next-act{max-width:680px;margin:22px auto 0}
   .next-act button{width:100%;background:linear-gradient(180deg,var(--accent),#8e2f23);border:1px solid #d8483a;
@@ -640,28 +650,22 @@ const Game = {
     const inSet=new Set(this.places);
     const roots=this.places.filter(p=>!this.parents[p]||!inSet.has(this.parents[p]));
     const kidsOf=p=>this.places.filter(c=>this.parents[c]===p);
-    g.innerHTML=''; const tree=document.createElement('div'); tree.className='map-tree';
-    const render=(kw,parentEl)=>{
-      const node=document.createElement('div'); node.className='map-node';
+    g.innerHTML=''; const tree=document.createElement('div'); tree.className='map-tree hmap';
+    // 가로형 트리: 노드 오른쪽으로 자식이 뻗어나감 (접기 없이 전부 펼침)
+    const render=(kw)=>{
+      const node=document.createElement('div'); node.className='hnode';
       const chip=document.createElement('span'); chip.className='map-chip'+(kw===this.here?' here':'');
       chip.textContent=kw; chip.onclick=()=>this.lookupKeyword(kw,false);
       node.appendChild(chip);
       const kids=kidsOf(kw);
-      const open=this.expanded.has(kw);
       if(kids.length){
-        const tg=document.createElement('span'); tg.className='map-toggle';
-        tg.textContent=open?'▾':('▸ '+kids.length);
-        tg.onclick=(e)=>{ e.stopPropagation(); if(open)this.expanded.delete(kw); else this.expanded.add(kw); this.renderPlaces(); };
-        node.appendChild(tg);
+        const kbox=document.createElement('div'); kbox.className='hkids';
+        kids.forEach(c=>kbox.appendChild(render(c)));
+        node.appendChild(kbox);
       }
-      parentEl.appendChild(node);
-      if(kids.length && open){
-        const kbox=document.createElement('div'); kbox.className='map-kids';
-        kids.forEach(c=>render(c,kbox));
-        parentEl.appendChild(kbox);
-      }
+      return node;
     };
-    roots.forEach(r=>render(r,tree));
+    roots.forEach(r=>tree.appendChild(render(r)));
     g.appendChild(tree);
   },
 
