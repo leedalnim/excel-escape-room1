@@ -253,6 +253,22 @@
   .vp-switch:hover{background:#d8483a;transform:translateY(-1px)}
   .vp-box.bretton{background:rgba(90,125,154,.12);border-color:var(--blue)}
   .vp-box.bretton .vp-now b{color:var(--blue)}
+  /* ===== graphic lock ===== */
+  .lock-widget{max-width:280px;margin:18px 0 6px;background:linear-gradient(180deg,#272b34,#15171d);
+    border:1px solid #3f4452;border-radius:12px;padding:18px 18px 20px;text-align:center;
+    box-shadow:0 12px 34px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)}
+  .lock-ico{font-size:24px;margin-bottom:10px;opacity:.9}
+  .lock-display{display:flex;justify-content:center;gap:8px;margin-bottom:16px}
+  .lock-slot{width:36px;height:46px;border:1px solid #4a4f5b;border-radius:6px;background:#0d0f14;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:25px;color:var(--gold)}
+  .lock-slot.filled{border-color:var(--gold);box-shadow:0 0 0 1px rgba(207,166,78,.3) inset}
+  .lock-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:210px;margin:0 auto}
+  .lock-key{padding:12px 0;background:#2c313e;border:1px solid #3f4452;border-radius:7px;color:var(--ink);
+    font-family:var(--mono);font-size:17px;cursor:pointer;transition:.12s;user-select:none}
+  .lock-key:hover{background:#363c4b;border-color:#5a6070;transform:translateY(-1px)}
+  .lock-key.ok{background:var(--accent);border-color:#d8483a;color:#fff;font-size:13px;letter-spacing:.05em}
+  .lock-key.ok:hover{background:#d8483a}
+  .lock-key.del{color:var(--ink-dim)}
   /* ===== letterpaper ===== */
   .letter-paper{margin:18px 0 6px;background-color:#f2e9d0;color:#352b16;
     border:1px solid #cbbd97;border-radius:3px;padding:30px 34px;position:relative;
@@ -715,6 +731,29 @@ const Game = {
     this.printEntry(null,'［시점 전환］\n이제 '+who+'의 시점입니다.\n키워드를 입력해 이 인물의 상황을 살펴보세요.',{notice:true});
     this.autoSave();
   },
+  // 그래픽 자물쇠 위젯 — 숫자를 눌러 코드를 키워드로 제출
+  buildLock(n){
+    const wrap=document.createElement('div'); wrap.className='lock-widget';
+    const ico=document.createElement('div'); ico.className='lock-ico'; ico.textContent='🔒';
+    const disp=document.createElement('div'); disp.className='lock-display';
+    const slots=[]; let val='';
+    for(let i=0;i<n;i++){ const s=document.createElement('span'); s.className='lock-slot'; disp.appendChild(s); slots.push(s); }
+    const render=()=>slots.forEach((s,i)=>{ s.textContent=val[i]||''; s.classList.toggle('filled',!!val[i]); });
+    const pad=document.createElement('div'); pad.className='lock-pad';
+    ['1','2','3','4','5','6','7','8','9','⌫','0','확인'].forEach(k=>{
+      const b=document.createElement('button');
+      b.className='lock-key'+(k==='확인'?' ok':'')+(k==='⌫'?' del':'');
+      b.textContent=k;
+      b.onclick=()=>{
+        if(k==='⌫'){ val=val.slice(0,-1); render(); }
+        else if(k==='확인'){ if(val.length){ const code=val; val=''; render(); this.lookupKeyword(code,false); } }
+        else if(val.length<n){ val+=k; render(); }
+      };
+      pad.appendChild(b);
+    });
+    wrap.appendChild(ico); wrap.appendChild(disp); wrap.appendChild(pad); render();
+    return wrap;
+  },
   // 편지 팝업 열기
   showLetter(html){
     const body=document.getElementById('letterBody'); if(!body) return;
@@ -840,6 +879,14 @@ const Game = {
     p.innerHTML=tagHtml+shtml;
     e.appendChild(p);
     if(letterEl){ e.appendChild(letterEl); setTimeout(()=>this.showLetter(letterHtml),400); }
+
+    // 자물쇠/도어락 지문 → 그래픽 잠금장치 위젯 (명시적 'N자리' 입력 지문에만)
+    const dm=/([1-9])\s*자리/.exec(story);
+    if(dm && !/^(힌트|정답)/.test(echoKw||'') && !/획득\s*[\]】]/.test(story) &&
+       !/풀고|열렸|열고|들어왔|들어간|해제/.test(story) &&
+       /자물쇠|도어락|비밀번호|암호|숫자/.test(story)){
+      e.appendChild(this.buildLock(parseInt(dm[1])));
+    }
 
     // 분기 코드가 announce된 지문이면 "분기 저장하기" 버튼을 노출
     if(btag){
