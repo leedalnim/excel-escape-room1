@@ -173,15 +173,15 @@
   .map-chip.here{background:var(--blue);color:#0b0c10;border-color:var(--blue);font-weight:700}
   .map-chip.here:after{content:" · 지금";font-size:10px;font-family:var(--mono)}
   /* 가로형 지도 */
-  .map-tree.hmap{display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding:4px 2px 8px}
-  .map-tree.hmap::-webkit-scrollbar{height:7px}.map-tree.hmap::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
+  .map-tree.hmap{display:flex;flex-direction:column;gap:8px;overflow:auto;padding:4px 2px 8px;max-height:240px}
+  .map-tree.hmap::-webkit-scrollbar{height:7px;width:7px}.map-tree.hmap::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
   .hnode{display:flex;align-items:center}
   .hnode>.map-chip{flex:none;white-space:nowrap}
-  .hkids{display:flex;flex-direction:column;gap:6px;margin-left:14px;padding-left:14px;
+  .hkids{display:flex;flex-direction:column;gap:8px;margin-left:16px;padding-left:16px;
     border-left:1px solid var(--line);position:relative}
-  .hkids:before{content:"";position:absolute;left:0;top:50%;width:8px;height:1px;background:var(--line);transform:translateX(-8px)}
+  .hkids:before{content:"";position:absolute;top:50%;left:-16px;width:16px;height:1px;background:var(--line)}
   .hnode .hnode{position:relative}
-  .hnode .hnode:before{content:"";position:absolute;left:-14px;top:50%;width:14px;height:1px;background:var(--line)}
+  .hnode .hnode:before{content:"";position:absolute;left:-16px;top:50%;width:16px;height:1px;background:var(--line)}
   /* next act */
   .next-act{max-width:680px;margin:22px auto 0}
   .next-act button{width:100%;background:linear-gradient(180deg,var(--accent),#8e2f23);border:1px solid #d8483a;
@@ -646,10 +646,23 @@ const Game = {
     const g=document.getElementById('placeGrid');
     document.getElementById('placeCt').textContent=this.places.length;
     if(!this.places.length){ g.innerHTML='<span class="inv-empty">아직 둘러본 곳이 없습니다</span>'; return; }
-    if(!this.expanded) this.expanded=new Set();
-    const inSet=new Set(this.places);
-    const roots=this.places.filter(p=>!this.parents[p]||!inSet.has(this.parents[p]));
-    const kidsOf=p=>this.places.filter(c=>this.parents[c]===p);
+    // 실제 연결관계(adj)를 양방향 그래프로 만들어 BFS → 형제가 같은 위계로 묶임
+    const visited=new Set(this.places);
+    const adj=this.adj||{};
+    const und=Object.create(null);
+    const link=(a,b)=>{ (und[a]=und[a]||new Set()).add(b); (und[b]=und[b]||new Set()).add(a); };
+    Object.keys(adj).forEach(k=>(adj[k]||[]).forEach(n=>link(k,n)));
+    const parent=Object.create(null), seen=new Set();
+    // 방문한 순서대로 아직 안 잡힌 곳을 루트로 삼아 BFS (연결 그래프가 끊겨도 안전)
+    this.places.forEach(start=>{
+      if(seen.has(start)) return;
+      seen.add(start); const q=[start];
+      while(q.length){ const cur=q.shift();
+        [...(und[cur]||[])].forEach(n=>{ if(visited.has(n)&&!seen.has(n)){ seen.add(n); parent[n]=cur; q.push(n); } });
+      }
+    });
+    const roots=this.places.filter(p=>!(p in parent));
+    const kidsOf=p=>this.places.filter(c=>parent[c]===p);
     g.innerHTML=''; const tree=document.createElement('div'); tree.className='map-tree hmap';
     // 가로형 트리: 노드 오른쪽으로 자식이 뻗어나감 (접기 없이 전부 펼침)
     const render=(kw)=>{
