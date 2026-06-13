@@ -1735,8 +1735,14 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.q
 // 첫 화면 메뉴 초기화 (해금 챕터 / 이어서 하기 상태)
 Game.loadEasy();
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=d;Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
-// PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이)
-if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+// PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){ try{ reg.update(); }catch(e){} }).catch(function(){});
+  });
+  var _swRefreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_swRefreshing) return; _swRefreshing=true; location.reload(); });
+}
 // 안드로이드: 설치 프롬프트 캡처 → "지금 설치하기" 버튼에서 사용
 window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); window.deferredInstallPrompt=e; });
 </script>
