@@ -62,9 +62,23 @@
   .act-card h3{font-family:var(--serif);font-size:26px;font-weight:700;margin:8px 0 10px}
   .act-card p{font-size:13px;color:var(--ink-dim);line-height:1.6}
   .credit{position:fixed;bottom:18px;width:100%;text-align:center;font-family:var(--mono);
-    font-size:10px;letter-spacing:.2em;color:#4a4d57;z-index:41}
+    font-size:10px;letter-spacing:.2em;color:#969ab0;z-index:41}
   .credit a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(207,166,78,.4)}
   .credit a:hover{color:#e3cf95}
+  .install-link{background:none;border:none;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+    color:var(--gold);cursor:pointer;padding:0;border-bottom:1px solid rgba(207,166,78,.4)}
+  .install-link:hover{color:#e3cf95}
+  .install-card{max-width:min(94vw,440px);width:auto;text-align:left}
+  .install-card h3{text-align:center}.install-card .ec{text-align:center;margin-bottom:18px}
+  .install-now{width:100%;margin:0 0 18px 0!important;background:linear-gradient(180deg,var(--accent),#8e2f23)!important;
+    border:1px solid #d8483a!important;color:#fff!important;font-family:var(--serif)!important;font-weight:700;font-size:16px!important;padding:14px!important}
+  .install-guide{display:flex;flex-direction:column;gap:16px}
+  .ig-block{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+  .ig-os{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--gold);margin-bottom:10px}
+  .ig-block ol{margin:0;padding-left:20px;color:var(--ink);font-size:13.5px;line-height:1.9}
+  .ig-block ol b{color:#e3cf95}
+  .ig-ico{font-size:13px}
+  .ig-note{font-size:12px;color:var(--ink-dim);line-height:1.6;text-align:center;margin-top:2px}
   .menu{display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0;animation:rise .9s .55s forwards;transform:translateY(18px)}
   .start-btn{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));
     border:1px solid var(--line);border-radius:4px;color:var(--ink);
@@ -157,8 +171,8 @@
   .inv-item{font-family:var(--body);font-size:13px;background:var(--panel2);border:1px solid var(--line);
     padding:6px 12px;border-radius:3px;cursor:pointer;transition:.2s;position:relative}
   .inv-item:hover{border-color:var(--gold);color:var(--gold)}
-  .inv-item .code{font-family:var(--mono);font-size:9px;color:#5a5d67;display:block}
-  .inv-empty{font-size:12px;color:#4a4d57;font-style:italic}
+  .inv-item .code{font-family:var(--mono);font-size:9px;color:#8f94a6;display:block}
+  .inv-empty{font-size:12px;color:#969ab0;font-style:italic}
   .place-grid{display:flex;flex-wrap:wrap;gap:8px}
   .place-chip{font-family:var(--body);font-size:13px;background:var(--panel2);border:1px solid var(--line);
     padding:6px 13px;border-radius:30px;cursor:pointer;transition:.2s;color:var(--ink)}
@@ -232,7 +246,7 @@
     padding:6px 12px;border-radius:3px;cursor:pointer;transition:.2s;position:relative}
   .sheet-chip:hover{border-color:var(--blue);color:var(--blue)}
   .sheet-chip b{color:var(--gold);font-family:var(--mono);font-size:12px}
-  .sheet-chip .code{font-family:var(--mono);font-size:9px;color:#5a5d67;display:block}
+  .sheet-chip .code{font-family:var(--mono);font-size:9px;color:#8f94a6;display:block}
   .sheet-card{max-width:min(92vw,720px);width:auto}
   .sheet-scroll{max-height:60vh;overflow:auto;margin:6px 0 4px;background:#fff;border-radius:3px;padding:10px}
   .sheet-scroll::-webkit-scrollbar{height:8px;width:8px}.sheet-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:8px}
@@ -266,7 +280,7 @@
   .sheet-card .sheet-scroll{box-shadow:0 2px 12px rgba(0,0,0,.3)}
   .sheet-figure{margin:14px auto 2px;text-align:center}
   .sheet-figure img{max-width:100%;border:1px solid #c9c9c9;border-radius:3px;background:#fff}
-  .sheet-figure figcaption{font-family:var(--mono);font-size:11px;color:#7a7a7a;margin-top:6px;letter-spacing:.05em}
+  .sheet-figure figcaption{font-family:var(--mono);font-size:11px;color:#565656;margin-top:6px;letter-spacing:.05em}
   /* ===== viewpoint switch ===== */
   #vpSect h4{color:var(--gold)}
   .vp-box{display:flex;align-items:center;gap:10px;background:rgba(207,166,78,.1);border:1px solid var(--gold);
@@ -379,7 +393,7 @@
   .detail-out{padding:4px 12px 8px;font-size:13px;color:var(--ink-dim);white-space:pre-wrap;min-height:6px;font-family:var(--body)}
   .detail-out.ok{color:#9bc48f}
   .detail-out.bad{color:var(--bad)}
-  .inv-tip{font-size:11.5px;color:#6b6e78;line-height:1.55;margin-top:10px}
+  .inv-tip{font-size:11.5px;color:#9a9fb0;line-height:1.55;margin-top:10px}
   .inv-tip b{color:var(--gold)}
   .note-clear{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
     color:var(--ink-dim);background:none;border:1px solid var(--line);padding:3px 9px;border-radius:3px;cursor:pointer;transition:.2s}
@@ -389,7 +403,7 @@
     font-family:var(--mono);font-size:13px;line-height:1.85;padding:12px;outline:none;transition:.2s;
     box-shadow:inset 0 1px 6px rgba(0,0,0,.4)}
   .notepad:focus{border-color:var(--gold);box-shadow:inset 0 1px 6px rgba(0,0,0,.4),0 0 0 3px rgba(207,166,78,.1)}
-  .notepad::placeholder{color:#54514a;font-style:italic}
+  .notepad::placeholder{color:#928d82;font-style:italic}
   @keyframes itemPop{0%{background:rgba(207,166,78,.4);border-color:var(--gold);transform:scale(1.05)}100%{background:var(--panel2);border-color:var(--line);transform:scale(1)}}
   .inv-item.added{animation:itemPop 1.4s ease}
   .ending-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dotted var(--line);cursor:pointer}
@@ -399,7 +413,7 @@
   .ending-row.got .pin{background:var(--accent-dim);border-color:var(--accent);color:#fff}
   .ending-row .en{font-size:13px;color:var(--ink-dim)}
   .ending-row.got .en{color:var(--ink)}
-  .ending-lock{font-size:12px;color:#4a4d57;font-style:italic}
+  .ending-lock{font-size:12px;color:#969ab0;font-style:italic}
 
   /* modal */
   .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
@@ -451,7 +465,7 @@
     <input id="loadCode" autocomplete="off" spellcheck="false" placeholder="이어하기 코드 붙여넣기">
     <button onclick="Game.loadFromInput()">코드로 이어하기</button>
   </div>
-  <div class="credit">원작 ⓒ Nandy · <a href="https://m.blog.naver.com/4490yy/223024731447" target="_blank" rel="noopener">원작자 블로그</a> · 웹 방탈출 변환</div>
+  <div class="credit">원작 ⓒ Nandy · <a href="https://m.blog.naver.com/4490yy/223024731447" target="_blank" rel="noopener">원작자 블로그</a> · <button class="install-link" onclick="Game.showInstall()">📱 홈 화면에 추가</button></div>
 </section>
 
 <!-- GAME -->
@@ -554,6 +568,31 @@
   <h3>탐색 지도</h3><div class="ec" id="mapHere"></div>
   <div class="map-scroll"><div id="mapBody"></div></div>
   <button onclick="document.getElementById('mapModal').classList.remove('on')">닫기</button>
+</div></div>
+<div class="modal" id="installModal"><div class="card install-card">
+  <h3>📱 홈 화면에 추가</h3>
+  <div class="ec">앱처럼 설치 · 오프라인 플레이</div>
+  <button class="install-now" id="installNowBtn" style="display:none" onclick="Game.install()">지금 설치하기</button>
+  <div class="install-guide">
+    <div class="ig-block">
+      <div class="ig-os">🤖 안드로이드 (크롬)</div>
+      <ol>
+        <li>주소창 오른쪽 <b>⋮ 메뉴</b> 열기</li>
+        <li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b> 선택</li>
+        <li>홈 화면의 🔑 아이콘을 탭하면 전체화면 실행</li>
+      </ol>
+    </div>
+    <div class="ig-block">
+      <div class="ig-os">🍎 아이폰 (사파리)</div>
+      <ol>
+        <li>하단 <b>공유</b> 버튼 <span class="ig-ico">⬆️</span> 탭</li>
+        <li><b>홈 화면에 추가</b> 선택 → <b>추가</b></li>
+        <li>홈 화면의 🔑 아이콘을 탭하면 전체화면 실행</li>
+      </ol>
+    </div>
+    <div class="ig-note">설치하면 인터넷 없이도 플레이할 수 있어요. (저장은 같은 기기·같은 앱에서 이어집니다)</div>
+  </div>
+  <button onclick="document.getElementById('installModal').classList.remove('on')">닫기</button>
 </div></div>
 
 <script>
@@ -813,6 +852,18 @@ const Game = {
     if(!this.places.length) return;
     this.renderPlaces();
     document.getElementById('mapModal').classList.add('on');
+  },
+  // 홈 화면에 추가 안내 팝업
+  showInstall(){
+    const btn=document.getElementById('installNowBtn');
+    if(btn) btn.style.display = (window.deferredInstallPrompt ? 'block' : 'none');
+    document.getElementById('installModal').classList.add('on');
+  },
+  install(){
+    const p=window.deferredInstallPrompt; if(!p) return;
+    p.prompt(); p.userChoice.finally(()=>{ window.deferredInstallPrompt=null;
+      const b=document.getElementById('installNowBtn'); if(b) b.style.display='none';
+      document.getElementById('installModal').classList.remove('on'); });
   },
   // 모바일: 사이드 패널(가방) 열고 닫기
   toggleAside(){
@@ -1374,6 +1425,8 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.q
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=d;Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이)
 if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+// 안드로이드: 설치 프롬프트 캡처 → "지금 설치하기" 버튼에서 사용
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); window.deferredInstallPrompt=e; });
 </script>
 </body>
 </html>
