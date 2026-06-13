@@ -151,6 +151,8 @@
   .choices .chip.hint-chip:hover{background:var(--blue);color:#0b0c10;border-color:var(--blue);transform:translateY(-2px)}
   .choices .chip.answer-chip{color:var(--ink-dim);background:transparent;border-color:var(--line);border-style:dashed;font-size:13px}
   .choices .chip.answer-chip:hover{background:rgba(176,70,58,.15);border-color:var(--bad);color:#e3a59c;transform:translateY(-2px)}
+  .choices .chip.retry-chip{color:var(--blue);background:rgba(90,125,154,.12);border-color:var(--blue);font-weight:700}
+  .choices .chip.retry-chip:hover{background:var(--blue);color:#0b0c10;border-color:var(--blue);transform:translateY(-2px)}
   .hidden-hint{max-width:680px;margin:12px auto 0;font-size:13px;color:#e3cf95;
     background:rgba(207,166,78,.08);border:1px dashed var(--gold);border-radius:4px;padding:11px 15px;line-height:1.55}
   .hidden-hint b{color:var(--gold)}
@@ -1476,6 +1478,7 @@ const Game = {
 
     // choices as buttons
     const choices=this.parseChoices(text);
+    const isDeathEnding=/♠\s*엔딩|엔딩\s*\d+\s*[:：]/.test(String(text)) && !/탈출/.test(String(text));
     let hasHidden=false;
     if(choices.length){
       const c=document.createElement('div'); c.className='choices';
@@ -1484,6 +1487,7 @@ const Game = {
         if(/^ctrl\+z$/i.test(ch)){ b.className='chip back'; b.textContent='↩ 돌아가기'; b.onclick=()=>this.undo(); }
         else if(ch==='?'){ hasHidden=true; b.className='chip hidden'; b.textContent='?';
           b.title='숨겨진 키워드 — 아래 입력창에 직접 입력하세요'; b.onclick=()=>this.focusInput(); }
+        else if(isDeathEnding){ b.className='chip retry-chip'; b.textContent='↩ 다시 시도하기'; b.onclick=()=>this.lookupKeyword(ch,false); }
         else if(/^힌트/.test(ch)){ b.className='chip hint-chip'; b.textContent='💡 '+ch; b.onclick=()=>this.lookupKeyword(ch,false); }
         else if(/^정답/.test(ch)){ b.className='chip answer-chip'; b.textContent='🔑 '+ch+' 보기'; b.onclick=()=>this.lookupKeyword(ch,false); }
         else { b.className='chip'; b.textContent=ch; b.onclick=()=>this.lookupKeyword(ch,false); }
