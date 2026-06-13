@@ -207,14 +207,12 @@
     padding:16px;border-radius:4px;cursor:pointer;transition:.25s;box-shadow:0 8px 26px rgba(192,57,43,.25)}
   .next-act button:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(192,57,43,.4)}
   .next-act .sub{font-family:var(--mono);font-size:11px;letter-spacing:.2em;display:block;margin-bottom:6px;opacity:.8;font-weight:400}
-  /* branch-save button */
+  /* branch auto-save badge */
   .branch-save{max-width:680px;margin:14px auto 0}
-  .branch-save button{width:100%;background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);
-    color:var(--gold);font-family:var(--serif);font-weight:700;font-size:16px;letter-spacing:.04em;
-    padding:14px;border-radius:4px;cursor:pointer;transition:.25s;box-shadow:0 6px 20px rgba(207,166,78,.15)}
-  .branch-save button:hover{transform:translateY(-2px);background:linear-gradient(180deg,#463d28,#2c261a)}
-  .branch-save button.done{background:rgba(106,143,95,.12);border-color:var(--ok);color:var(--ok);cursor:default;transform:none;box-shadow:none}
-  .branch-save .sub{font-family:var(--mono);font-size:10px;letter-spacing:.25em;display:block;margin-bottom:6px;opacity:.8;font-weight:400}
+  .branch-badge{width:100%;background:rgba(106,143,95,.1);border:1px solid var(--ok);
+    color:var(--ok);font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.04em;
+    padding:13px;border-radius:4px;text-align:center}
+  .branch-save .sub{font-family:var(--mono);font-size:10px;letter-spacing:.25em;display:block;margin-bottom:6px;opacity:.75;font-weight:400;color:var(--ink-dim)}
   /* save / load */
   .save-area{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:3px;color:var(--gold);
     font-family:var(--mono);font-size:11px;padding:10px;min-height:90px;resize:vertical;outline:none;word-break:break-all}
@@ -1144,16 +1142,15 @@ const Game = {
       e.appendChild(this.buildLock(parseInt(dm[1])));
     }
 
-    // 분기 코드가 announce된 지문이면 "분기 저장하기" 버튼을 노출
+    // 분기 코드가 announce된 지문이면 자동 저장하고 "저장됨" 배지 표시
     if(btag){
       const bcode=((btag[1].match(/[:：]\s*(\w+)/)||[])[1]||'');
       if(/^\d+$/.test(bcode) && this.data.branchOrder.indexOf(bcode)>=0){
+        this.saveBranchCode(bcode);   // 클릭 없이 자동 저장
         const box=document.createElement('div'); box.className='branch-save';
-        const bb=document.createElement('button');
-        bb.innerHTML='<span class="sub">분기점 · BRANCH POINT</span>💾 분기 코드 '+this.esc(bcode)+' 저장하기';
-        bb.onclick=()=>{ this.saveBranchCode(bcode); bb.disabled=true; bb.className='done';
-          bb.innerHTML='✓ 분기 '+this.esc(bcode)+' 저장 완료 — 다음 키워드로 계속 진행하세요'; };
-        box.appendChild(bb); e.appendChild(box);
+        const badge=document.createElement('div'); badge.className='branch-badge';
+        badge.innerHTML='<span class="sub">분기점 · BRANCH POINT</span>✓ 분기 코드 '+this.esc(bcode)+' 자동 저장됨';
+        box.appendChild(badge); e.appendChild(box);
       }
     }
 
@@ -1228,14 +1225,15 @@ const Game = {
             .replace(/\(\s*\)\s*안의/g,'아래 선택지의')
             .replace(/\(\s*\)\s*안에/g,'아래 선택지에')
             .replace(/괄호/g,'선택지')
-            // 엑셀 원본 잔재 → 웹 UI 문구로 정리
+            // 엑셀 원본 잔재 → 웹은 분기 자동 저장이므로 안내문 정리
             .replace(/분기\s*코드인\s*"[^"]+"\s*을?를?\s*지우고,?\s*/g,'')
-            .replace(/(새로운\s*)?분기\s*코드(인)?\s*"[^"]+"\s*을?를?\s*분기점에\s*입력하여,?\s*\n?\s*분기를\s*저장하세요\.?/g,'위 [분기 저장하기] 버튼을 눌러 분기를 저장하세요.')
-            .replace(/분기\s*코드를?\s*분기점에\s*입력하세요\.?/g,'위 [분기 저장하기] 버튼을 누르세요.')
-            .replace(/분기점에\s*입력하여,?/g,'위 [분기 저장하기] 버튼을 눌러,')
-            .replace(/분기\s*코드를?\s*지금\s*입력하지\s*않으면/g,'분기를 저장하지 않으면')
-            .replace(/분기\s*코드를?\s*먼저\s*입력해야/g,'분기를 먼저 저장해야')
-            .replace(/분기점/g,'분기 저장 버튼');
+            .replace(/(새로운\s*)?분기\s*코드(인)?\s*"[^"]+"\s*을?를?\s*분기점에\s*입력하여,?\s*\n?\s*분기를\s*저장하세요\.?/g,'분기가 자동으로 저장되었습니다.')
+            .replace(/분기\s*코드를?\s*분기점에\s*입력하세요\.?/g,'분기가 자동으로 저장되었습니다.')
+            .replace(/분기점에\s*입력하여,?/g,'분기가 자동 저장되어,')
+            .replace(/분기\s*코드를?\s*지금\s*입력하지\s*않으면,?\s*\n?\s*이후[^\n]*진행되지\s*않습니다\.?/g,'')
+            .replace(/분기\s*코드를?\s*지금\s*입력하지\s*않으면[^\n]*/g,'')
+            .replace(/분기\s*코드를?\s*먼저\s*입력해야/g,'분기가 자동 저장되어')
+            .replace(/분기점/g,'분기');
   },
 
   focusInput(){ const i=document.getElementById('kwInput'); i.focus();
