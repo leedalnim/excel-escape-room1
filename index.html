@@ -111,10 +111,11 @@
   /* ===== Game layout ===== */
   #game{display:none;height:100%;}
   #game.live{display:grid;grid-template-columns:1fr 340px;}
-  .stage{display:flex;flex-direction:column;height:100vh;min-width:0;
+  .stage{display:flex;flex-direction:column;height:100vh;height:100dvh;min-width:0;
     background:linear-gradient(180deg,#1a1d25,#14161d);}
   .topbar{display:flex;align-items:center;gap:14px;padding:14px 26px;border-bottom:1px solid var(--line);
-    background:rgba(13,14,19,.7);backdrop-filter:blur(4px)}
+    background:rgba(13,14,19,.7);backdrop-filter:blur(4px);
+    padding-top:calc(14px + env(safe-area-inset-top,0px));flex:none;position:relative;z-index:10}
   .topbar .badge{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--accent);text-transform:uppercase}
   .topbar .title{font-family:var(--serif);font-weight:700;font-size:18px}
   .topbar .step{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
@@ -191,7 +192,7 @@
   .composer .row{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:center}
   .composer .prompt{font-family:var(--mono);color:var(--accent);font-size:18px}
   .composer input{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
-    font-family:var(--mono);font-size:15px;padding:13px 16px;border-radius:3px;outline:none;transition:.2s}
+    font-family:var(--mono);font-size:16px;padding:13px 16px;border-radius:3px;outline:none;transition:.2s}
   .composer input:focus{border-color:var(--accent-dim);box-shadow:0 0 0 3px rgba(192,57,43,.12)}
   .composer .hint{max-width:680px;margin:8px auto 0;font-size:11.5px;color:#8c8fa0;font-family:var(--mono);letter-spacing:.05em}
   .composer button.send{background:var(--accent);border:none;color:#fff;font-family:var(--mono);
@@ -200,7 +201,7 @@
 
   /* ===== Side panel ===== */
   .aside{background:linear-gradient(180deg,var(--panel),var(--bg2));border-left:1px solid var(--line);
-    display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+    display:flex;flex-direction:column;height:100vh;height:100dvh;overflow-y:auto}
   .aside::-webkit-scrollbar{width:8px}.aside::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
   .sect{padding:20px 20px 8px;border-bottom:1px solid var(--line)}
   .sect h4{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--ink-dim);
@@ -449,7 +450,7 @@
   .letter-card button{margin:20px auto 0;display:block}
   .load-row{display:flex;gap:8px;max-width:520px;margin:26px auto 0;opacity:0;animation:rise .9s .7s forwards;transform:translateY(18px)}
   .load-row input{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
-    font-family:var(--mono);font-size:12px;padding:11px 14px;border-radius:3px;outline:none}
+    font-family:var(--mono);font-size:16px;padding:11px 14px;border-radius:3px;outline:none}
   .load-row input:focus{border-color:var(--gold)}
   .load-row button{background:transparent;border:1px solid var(--gold);color:var(--gold);
     font-family:var(--mono);font-size:12px;letter-spacing:.1em;padding:11px 18px;border-radius:3px;cursor:pointer;transition:.2s}
@@ -458,7 +459,7 @@
   .detail-row{display:flex;gap:6px;padding:8px 10px}
   .detail-row .prompt{font-family:var(--mono);color:var(--gold);font-size:14px}
   .detail-row input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--line);
-    color:var(--ink);font-family:var(--mono);font-size:12px;padding:4px 2px;outline:none}
+    color:var(--ink);font-family:var(--mono);font-size:16px;padding:4px 2px;outline:none}
   .detail-row input:focus{border-color:var(--gold)}
   .detail-out{padding:4px 12px 8px;font-size:13px;color:var(--ink-dim);white-space:pre-wrap;min-height:6px;font-family:var(--body)}
   .detail-out.ok{color:#9bc48f}
@@ -866,9 +867,8 @@ const Game = {
     const em = text.match(/엔딩\s*코드\s*[:：]\s*(\w+)/);
     if(em && this.data.endings[em[1]]){ this.addEnding(em[1]); }
 
-    // 쉬운 입력 모드: 지문에 등장한 아이템을 자동 획득
-    if(this.easyMode){
-      const ire=/아이템\s*코드\s*[:：]\s*(\w+)/g; let im;
+    // 지문에 등장한 아이템은 항상 자동 획득 (놓쳐서 막히는 일 방지)
+    { const ire=/아이템\s*코드\s*[:：]\s*(\w+)/g; let im;
       while((im=ire.exec(text))){ const c=im[1];
         if(this.data.items[c] && !this.inv[c]){ this.addItem(c); this.flashItem(c); this.toast('획득 — '+(this.data.items[c].name||c)); } }
     }

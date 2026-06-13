@@ -1,5 +1,5 @@
 // 비밀 방탈출 — 서비스 워커 (오프라인 + 앱처럼 즉시 실행)
-const CACHE = 'escape-secret-v2';
+const CACHE = 'escape-secret-v3';
 const CORE = [
   './',
   './index.html',
