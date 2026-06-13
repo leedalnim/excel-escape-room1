@@ -2,8 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Episode 1. 비밀 — 웹 방탈출</title>
+<meta name="description" content="브라우저에서 즐기는 텍스트 기반 방탈출 게임">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#13151c">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" href="assets/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="비밀 방탈출">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -125,7 +134,7 @@
   .choices .chip.back{color:var(--blue);border-color:var(--blue)}
   .choices .chip.back:hover{background:var(--blue);color:#0b0c10;border-color:var(--blue)}
 
-  .composer{border-top:1px solid var(--line);padding:18px 8%;background:rgba(13,14,19,.85)}
+  .composer{border-top:1px solid var(--line);padding:18px 8%;background:rgba(13,14,19,.85);padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
   .composer .row{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:center}
   .composer .prompt{font-family:var(--mono);color:var(--accent);font-size:18px}
   .composer input{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
@@ -1363,6 +1372,8 @@ document.querySelectorAll('.modal').forEach(function(m){ m.addEventListener('cli
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.querySelectorAll('.modal.on').forEach(function(m){ m.classList.remove('on'); }); });
 // 첫 화면 메뉴 초기화 (해금 챕터 / 이어서 하기 상태)
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=d;Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
+// PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이)
+if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 </script>
 </body>
 </html>
