@@ -146,9 +146,9 @@
   .hidden-hint{max-width:680px;margin:12px auto 0;font-size:13px;color:#e3cf95;
     background:rgba(207,166,78,.08);border:1px dashed var(--gold);border-radius:4px;padding:11px 15px;line-height:1.55}
   .hidden-hint b{color:var(--gold)}
-  /* 쉬운 입력 모드: 탭 가능한 키워드 — 흰색 그대로 + 은은한 밑줄만 */
-  .tap-word{border-bottom:1px dashed rgba(207,166,78,.6);cursor:pointer;border-radius:2px;transition:background .15s}
-  .tap-word:hover{background:rgba(207,166,78,.18)}
+  /* 쉬운 입력 모드: 탭 가능한 키워드 — 흰색 글자 + 흰색 은은한 밑줄 */
+  .tap-word{border-bottom:1px dashed rgba(243,239,230,.5);cursor:pointer;border-radius:2px;transition:background .15s}
+  .tap-word:hover{background:rgba(243,239,230,.12)}
   /* 지문 내 아이템 사용 버튼 (열쇠 등) */
   .use-inline{max-width:680px;margin:14px auto 0}
   .use-inline-btn{background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);color:var(--gold);
@@ -345,6 +345,11 @@
   .lock-slot{width:36px;height:46px;border:1px solid #4a4f5b;border-radius:6px;background:#0d0f14;
     display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:25px;color:var(--gold)}
   .lock-slot.filled{border-color:var(--gold);box-shadow:0 0 0 1px rgba(207,166,78,.3) inset}
+  .lock-slot.ok{border-color:var(--ok);color:var(--ok)}
+  .lock-msg{min-height:16px;font-family:var(--mono);font-size:12px;margin-bottom:10px}
+  .lock-msg.bad{color:var(--bad)}.lock-msg.ok{color:var(--ok);font-weight:700}
+  .lock-display.shake{animation:lshake .35s}
+  @keyframes lshake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
   .lock-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:210px;margin:0 auto}
   .lock-key{padding:12px 0;background:#2c313e;border:1px solid #3f4452;border-radius:7px;color:var(--ink);
     font-family:var(--mono);font-size:17px;cursor:pointer;transition:.12s;user-select:none}
@@ -1170,26 +1175,55 @@ const Game = {
     this.autoSave();
   },
   // 그래픽 자물쇠 위젯 — 숫자를 눌러 코드를 키워드로 제출
-  buildLock(n){
+  // 락의 정답을 정답N 지문에서 추출 (유일한 n자리 수일 때만)
+  lockAnswer(story,n){
+    const ch=this.parseChoices(story);
+    let tag=ch.find(c=>/^정답/.test(c));
+    if(!tag){ const h=ch.find(c=>/^힌트/.test(c)); if(h) tag='정답'+h.replace(/^힌트/,''); }
+    if(!tag) return null;
+    const p=this.findPassage(tag); if(p===null||p===undefined) return null;
+    let nums=[]; try{ nums=[...String(p).matchAll(new RegExp('(?<![0-9])([0-9]{'+n+'})(?![0-9])','g'))].map(m=>m[1]); }catch(e){ nums=(String(p).match(new RegExp('[0-9]{'+n+'}','g'))||[]); }
+    const uniq=[...new Set(nums)];
+    return uniq.length===1 ? uniq[0] : null;
+  },
+  buildLock(n,story){
+    const answer=this.lockAnswer(story||'',n);
     const wrap=document.createElement('div'); wrap.className='lock-widget';
     const ico=document.createElement('div'); ico.className='lock-ico'; ico.textContent='🔒';
     const disp=document.createElement('div'); disp.className='lock-display';
-    const slots=[]; let val='';
+    const msg=document.createElement('div'); msg.className='lock-msg';
+    const slots=[]; let val='', done=false;
     for(let i=0;i<n;i++){ const s=document.createElement('span'); s.className='lock-slot'; disp.appendChild(s); slots.push(s); }
     const render=()=>slots.forEach((s,i)=>{ s.textContent=val[i]||''; s.classList.toggle('filled',!!val[i]); });
+    const submit=()=>{
+      if(done) return;
+      if(val.length<n){ msg.className='lock-msg bad'; msg.textContent=n+'자리를 모두 입력하세요.'; return; }
+      const code=val;
+      const ok = answer ? (code===answer)
+                        : (this.canResolve(code) && !(this.data.items&&this.data.items[code]));
+      if(ok){ done=true; ico.textContent='🔓'; slots.forEach(s=>s.classList.add('ok'));
+        msg.className='lock-msg ok'; msg.textContent='✓ 잠금 해제!';
+        setTimeout(()=>this.lookupKeyword(code,false),450);
+      } else {
+        msg.className='lock-msg bad'; msg.textContent='✗ 오답입니다. 다시 시도하세요.';
+        disp.classList.remove('shake'); void disp.offsetWidth; disp.classList.add('shake');
+        val=''; render();
+      }
+    };
     const pad=document.createElement('div'); pad.className='lock-pad';
     ['1','2','3','4','5','6','7','8','9','⌫','0','확인'].forEach(k=>{
       const b=document.createElement('button');
       b.className='lock-key'+(k==='확인'?' ok':'')+(k==='⌫'?' del':'');
       b.textContent=k;
       b.onclick=()=>{
+        if(done) return;
         if(k==='⌫'){ val=val.slice(0,-1); render(); }
-        else if(k==='확인'){ if(val.length){ const code=val; val=''; render(); this.lookupKeyword(code,false); } }
-        else if(val.length<n){ val+=k; render(); }
+        else if(k==='확인'){ submit(); }
+        else if(val.length<n){ val+=k; render(); if(msg.textContent){ msg.textContent=''; msg.className='lock-msg'; } }
       };
       pad.appendChild(b);
     });
-    wrap.appendChild(ico); wrap.appendChild(disp); wrap.appendChild(pad); render();
+    wrap.appendChild(ico); wrap.appendChild(disp); wrap.appendChild(msg); wrap.appendChild(pad); render();
     return wrap;
   },
   // 편지 팝업 열기
@@ -1317,7 +1351,7 @@ const Game = {
     if(dm && !/^(힌트|정답)/.test(echoKw||'') && !/획득\s*[\]】]/.test(story) &&
        !/풀고|열렸|열고|들어왔|들어간|해제/.test(story) &&
        /자물쇠|도어락|비밀번호|암호|숫자/.test(story)){
-      e.appendChild(this.buildLock(parseInt(dm[1])));
+      e.appendChild(this.buildLock(parseInt(dm[1]), story));
     }
 
     // 분기 코드가 announce된 지문이면 자동 저장하고 "저장됨" 배지 표시
