@@ -90,6 +90,9 @@
   .restart-link{background:none;border:none;color:var(--ink-dim);font-family:var(--mono);
     font-size:11px;letter-spacing:.1em;cursor:pointer;transition:.2s;text-decoration:underline;text-underline-offset:3px}
   .restart-link:hover{color:var(--ink)}
+  .resume-info{font-family:var(--body);font-size:13px;color:var(--ink-dim);letter-spacing:.02em}
+  .resume-info .ri-act{color:var(--gold);font-weight:700}
+  .resume-info b{color:var(--blue);font-weight:700}
   .chapters{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:580px;
     margin:34px auto 0;opacity:0;animation:rise .9s .7s forwards;transform:translateY(18px)}
   .chapter-chip{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);
@@ -522,8 +525,9 @@
   <div class="menu">
     <button class="start-btn" id="startBtn" onclick="Game.beginOrResume()">
       <svg class="card-border"><rect x="0" y="0" width="100%" height="100%" rx="4" pathLength="100"/></svg>
-      <span id="startLabel">▶ 이야기 시작</span>
+      <span id="startLabel">이야기 시작</span>
     </button>
+    <div class="resume-info" id="resumeInfo" style="display:none"></div>
     <button class="restart-link" id="restartLink" onclick="Game.beginNew()" style="display:none">처음부터 다시 시작</button>
   </div>
   <div class="chapters" id="chapters"></div>
@@ -749,8 +753,16 @@ const Game = {
     this.loadProgress();
     this.renderChapters();
     const has=this.hasSave();
-    document.getElementById('startLabel').textContent = has?'▶ 이어서 하기':'▶ 이야기 시작';
+    document.getElementById('startLabel').textContent = has?'이어서 하기':'이야기 시작';
     document.getElementById('restartLink').style.display = has?'inline':'none';
+    const ri=document.getElementById('resumeInfo');
+    if(ri){
+      let s=null; if(has){ try{ s=this.decode(localStorage.getItem('excel_escape_save')); }catch(e){} }
+      if(s){ const meta=ACT_META[s.act]||{no:s.act,title:''}; const loc=s.here||s.lastKw||'';
+        ri.innerHTML='<span class="ri-act">'+this.esc(meta.no+'. '+meta.title)+'</span>'+(loc&&loc!=='시작'?' · <b>'+this.esc(loc)+'</b> 에서 이어서':' 이어서');
+        ri.style.display='block';
+      } else ri.style.display='none';
+    }
   },
   beginOrResume(){
     let s=null; try{ s=this.decode(localStorage.getItem('excel_escape_save')); }catch(e){}
