@@ -146,8 +146,8 @@
   .hidden-hint{max-width:680px;margin:12px auto 0;font-size:13px;color:#e3cf95;
     background:rgba(207,166,78,.08);border:1px dashed var(--gold);border-radius:4px;padding:11px 15px;line-height:1.55}
   .hidden-hint b{color:var(--gold)}
-  /* 쉬운 입력 모드: 탭 가능한 키워드 — 은은한 밑줄 + 클릭 */
-  .tap-word{color:#e7d6a6;border-bottom:1px dashed rgba(207,166,78,.55);cursor:pointer;border-radius:2px;transition:background .15s}
+  /* 쉬운 입력 모드: 탭 가능한 키워드 — 흰색 그대로 + 은은한 밑줄만 */
+  .tap-word{border-bottom:1px dashed rgba(207,166,78,.6);cursor:pointer;border-radius:2px;transition:background .15s}
   .tap-word:hover{background:rgba(207,166,78,.18)}
   /* 지문 내 아이템 사용 버튼 (열쇠 등) */
   .use-inline{max-width:680px;margin:14px auto 0}
@@ -988,8 +988,10 @@ const Game = {
     let h=this.esc(text);
     if(!this.easyMode) return h;
     return h.replace(/[0-9A-Za-z가-힣]+/g, w=>{
-      const kw=this.resolveWord(w);
-      return kw ? '<span class="tap-word" data-kw="'+kw+'">'+w+'</span>' : w;
+      const kw=this.resolveWord(w);   // kw는 w의 접두부 (조사 앞부분)
+      if(!kw) return w;
+      const rest=w.slice(kw.length);  // 조사 등 나머지는 밑줄 밖으로
+      return '<span class="tap-word" data-kw="'+kw+'">'+kw+'</span>'+rest;
     });
   },
 
