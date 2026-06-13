@@ -146,6 +146,23 @@
   .hidden-hint{max-width:680px;margin:12px auto 0;font-size:13px;color:#e3cf95;
     background:rgba(207,166,78,.08);border:1px dashed var(--gold);border-radius:4px;padding:11px 15px;line-height:1.55}
   .hidden-hint b{color:var(--gold)}
+  /* 쉬운 입력 모드: 탭 가능한 단서어 */
+  .tap-word{color:var(--gold);border-bottom:1px dotted var(--gold);cursor:pointer;padding:0 1px;border-radius:2px;transition:.15s}
+  .tap-word:hover{background:rgba(207,166,78,.18)}
+  /* 지문 내 아이템 사용 버튼 (열쇠 등) */
+  .use-inline{max-width:680px;margin:14px auto 0}
+  .use-inline-btn{background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);color:var(--gold);
+    font-family:var(--body);font-size:14px;padding:11px 20px;border-radius:30px;cursor:pointer;transition:.2s}
+  .use-inline-btn b{font-weight:700}
+  .use-inline-btn:hover{background:var(--gold);color:#0b0c10;transform:translateY(-2px)}
+  .ez-toggle{color:var(--ink-dim)}
+  .ez-toggle.on{color:var(--gold)!important;border-color:var(--gold)!important}
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(12px);z-index:70;
+    background:rgba(20,22,29,.96);border:1px solid var(--gold);color:var(--gold);font-family:var(--body);
+    font-size:14px;padding:11px 20px;border-radius:30px;box-shadow:0 10px 30px rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;transition:.3s;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .notice-line{max-width:680px;margin:12px auto 0;font-size:13px;color:#a3a6b4;
     white-space:pre-wrap;border-left:2px solid var(--line);padding-left:14px;line-height:1.65}
   @keyframes inpulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.55)}70%{box-shadow:0 0 0 9px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
@@ -505,6 +522,7 @@
       <button onclick="Game.openSave()">💾 저장</button>
       <button onclick="Game.undo()">↩ 돌아가기</button>
       <button onclick="Game.home()">처음으로</button>
+      <button class="ez-toggle" id="ezToggle" onclick="Game.toggleEasy()">✨ 쉬운입력 ON</button>
       <button class="aside-toggle" onclick="Game.toggleAside()">🎒 가방</button>
     </div>
     <div class="progress" title="진행률"><div class="progress-fill" id="progressFill"></div></div>
@@ -799,6 +817,13 @@ const Game = {
     const em = text.match(/엔딩\s*코드\s*[:：]\s*(\w+)/);
     if(em && this.data.endings[em[1]]){ this.addEnding(em[1]); }
 
+    // 쉬운 입력 모드: 지문에 등장한 아이템을 자동 획득
+    if(this.easyMode){
+      const ire=/아이템\s*코드\s*[:：]\s*(\w+)/g; let im;
+      while((im=ire.exec(text))){ const c=im[1];
+        if(this.data.items[c] && !this.inv[c]){ this.addItem(c); this.flashItem(c); this.toast('획득 — '+(this.data.items[c].name||c)); } }
+    }
+
     // track visited hubs (places you can return to) — parent = where you came from
     const realKw=(this.history[this.history.length-1]||{}).kw||'';
     if(this.isHub(realKw, this.parseChoices(text), text)){
@@ -909,6 +934,13 @@ const Game = {
     const open=!a.classList.contains('open');
     a.classList.toggle('open',open); if(b) b.classList.toggle('open',open);
   },
+  // 쉬운 입력 모드 (자동 획득 + 단어 탭)
+  loadEasy(){ try{ const v=localStorage.getItem('excel_easy'); this.easyMode=(v===null?true:v==='1'); }catch(e){ this.easyMode=true; } this.updateEzBtn(); },
+  toggleEasy(){ this.easyMode=!this.easyMode; try{ localStorage.setItem('excel_easy',this.easyMode?'1':'0'); }catch(e){} this.updateEzBtn();
+    this.toast('쉬운 입력 모드 '+(this.easyMode?'켜짐':'꺼짐')); },
+  updateEzBtn(){ const b=document.getElementById('ezToggle'); if(b){ b.textContent='✨ 쉬운입력 '+(this.easyMode?'ON':'OFF'); b.classList.toggle('on',this.easyMode); } },
+  toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+    t.textContent=msg; t.classList.add('show'); clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'),1700); },
 
   // ----- 시트(자료) 채널 -----
   openSheet(code){
@@ -1221,7 +1253,12 @@ const Game = {
 
     const p=document.createElement('div');
     p.className='passage'+(opt.bad?' bad':'')+(opt.notice?' notice':'');
-    let shtml=this.esc(story)
+    let body=this.esc(story);
+    // 쉬운 입력 모드: 지문 속 따옴표 단서어를 탭 가능하게 (버튼 주입 전에 처리)
+    if(this.easyMode){
+      body=body.replace(/"([^"\n]{1,10})"/g,(m,w)=> /\s/.test(w)?m:'<span class="tap-word" data-kw="'+w+'">"'+w+'"</span>');
+    }
+    let shtml=body
       .replace(/아이템\s*코드\s*[:：]\s*(\w+)/g,(m,c)=> this.data.items[c]
         ? '아이템 코드 : <button class="code-btn item'+(this.inv[c]?' got':'')+'" data-type="item" data-code="'+c+'">'+c+(this.inv[c]?' ✓':' ⊕ 획득')+'</button>'
         : m)
@@ -1268,12 +1305,32 @@ const Game = {
         c.appendChild(b);
       });
       e.appendChild(c);
+      // 숨겨진 키워드 안내 — 매번 반복되어 흐름이 끊기므로 처음 2번만 노출
       if(hasHidden){
-        const h=document.createElement('div'); h.className='hidden-hint';
-        h.innerHTML='🔒 <b>숨겨진 키워드</b>가 있습니다. 지문 속 단서를 찾아 <b>아래 입력창</b>에 직접 입력하세요.';
-        e.appendChild(h);
+        let seen=0; try{ seen=parseInt(localStorage.getItem('excel_hh')||'0',10)||0; }catch(e){}
+        if(seen<2){
+          const h=document.createElement('div'); h.className='hidden-hint';
+          h.innerHTML= this.easyMode
+            ? '🔒 <b>숨겨진 키워드</b>가 있어요. 지문 속 <b>밑줄 친 단어</b>를 탭하거나 직접 입력하세요.'
+            : '🔒 <b>숨겨진 키워드</b>가 있습니다. 지문 속 단서를 찾아 <b>아래 입력창</b>에 직접 입력하세요.';
+          e.appendChild(h);
+          try{ localStorage.setItem('excel_hh', String(seen+1)); }catch(e){}
+        }
       }
     }
+
+    // 보유한 아이템이 '필요하다'고 안내하는 지문 → 코드 입력/오답 없이 바로 '사용' 버튼
+    Object.keys(this.inv).forEach(code=>{
+      const nm=this.inv[code].name; if(!nm) return;
+      const rx=new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[^\\n]{0,8}(필요|있어야)');
+      if(rx.test(story)){
+        const box=document.createElement('div'); box.className='use-inline';
+        const ub=document.createElement('button'); ub.className='use-inline-btn';
+        ub.innerHTML='🔑 <b>'+this.esc(nm)+'</b> 사용하기';
+        ub.onclick=()=>this.lookupKeyword(code,false);
+        box.appendChild(ub); e.appendChild(box);
+      }
+    });
 
     // ※ notices, rephrased to match the button/input UI
     notices.forEach(n=>{
@@ -1485,6 +1542,7 @@ document.getElementById('detailInput').addEventListener('input',()=>Game.detailL
 document.getElementById('detailInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); Game.addByInput(); }});
 document.getElementById('notepad').addEventListener('input',()=>Game.syncNotes());
 document.getElementById('scroll').addEventListener('click',e=>{
+  const tw=e.target.closest('.tap-word'); if(tw){ Game.lookupKeyword(tw.dataset.kw,false); return; }
   const b=e.target.closest('.code-btn'); if(!b) return;
   if(b.dataset.type==='sheet') Game.openSheet(b.dataset.code);
   else Game.grabItem(b.dataset.code, b);
@@ -1494,6 +1552,7 @@ document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowe
 document.querySelectorAll('.modal').forEach(function(m){ m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('on'); }); });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.querySelectorAll('.modal.on').forEach(function(m){ m.classList.remove('on'); }); });
 // 첫 화면 메뉴 초기화 (해금 챕터 / 이어서 하기 상태)
+Game.loadEasy();
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=d;Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이)
 if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
