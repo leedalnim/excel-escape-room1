@@ -1403,19 +1403,26 @@ const Game = {
     const btag=story.match(/(☆\s*분기\s*코드\s*[:：]\s*\w+\s*☆)/);
     if(btag){ tagHtml='<span class="branch-tag">'+this.esc(btag[1].replace(/☆/g,'').trim())+'</span>\n'; story=story.replace(btag[1],'').trim(); }
 
-    // 편지(letter) → 실제 편지지로 렌더 + 팝업으로 크게 보기
+    // 문서(편지·쪽지·메일·원고 등) → 종이/편지지로 렌더 + 탭하면 크게
     let letterEl=null, letterHtml='';
-    if(/"ㄷㅁㄱㄱ"|2nd Ave/.test(story)){
-      const docLines=story.split('\n').filter(l=>/^"[^"]*"$/.test(l.trim()));
-      if(docLines.length){
-        letterHtml='<span class="lp-mark">한 통의 편지</span>'+docLines.map(l=>{
-          const t=l.trim().replace(/"/g,''); const cipher=!/[a-zA-Z0-9]/.test(t);
-          return '<div class="lp-line'+(cipher?' lp-cipher':'')+'">'+this.esc(t)+'</div>';
+    const docAcq=story.match(/\[\s*"?([^"\]\n]*?(?:편지|쪽지|메일|원고|손편지|고지서)[^"\]\n]*?)"?\s*획득/);
+    const isLetter=/^To\.\s/m.test(story) && /From\.|안녕하|드립니다|바랍니다/.test(story);
+    if(docAcq || isLetter){
+      const lines=story.split('\n'); let start=0;
+      for(let i=0;i<lines.length;i++){ const l=lines[i];
+        if(/획득|아이템\s*코드/.test(l) || /^[-–\s]*$/.test(l.trim())) start=i+1; else break; }
+      const bodyLines=lines.slice(start); const body=bodyLines.join('\n').trim();
+      if(body){
+        const label=docAcq?docAcq[1].trim():'편지';
+        letterHtml='<span class="lp-mark">'+this.esc(label)+'</span>'+bodyLines.map(l=>{
+          const t=l.trim(); if(!t) return '<div class="lp-line">&nbsp;</div>';
+          const cipher=/[ㄱ-ㅎㅏ-ㅣ┘└┐┌]/.test(t) && !/[가-힣A-Za-z0-9]/.test(t);
+          return '<div class="lp-line'+(cipher?' lp-cipher':'')+'">'+this.esc(t.replace(/^"|"$/g,''))+'</div>';
         }).join('');
         letterEl=document.createElement('div'); letterEl.className='letter-paper letter-open';
         letterEl.innerHTML=letterHtml+'<span class="lp-tap">✉ 눌러서 크게 보기</span>';
         letterEl.onclick=()=>this.showLetter(letterHtml);
-        story=story.split('\n').filter(l=>!/^"[^"]*"$/.test(l.trim())).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+        story=lines.slice(0,start).join('\n').replace(/\n{3,}/g,'\n\n').trim();
       }
     }
 
@@ -1424,7 +1431,7 @@ const Game = {
     let shtml=this.renderStoryHtml(story);
     p.innerHTML=tagHtml+shtml;
     e.appendChild(p);
-    if(letterEl){ e.appendChild(letterEl); setTimeout(()=>this.showLetter(letterHtml),400); }
+    if(letterEl){ e.appendChild(letterEl); }
 
     // 자물쇠/도어락 지문 → 그래픽 잠금장치 위젯 (명시적 'N자리' 입력 지문에만)
     const dm=/([1-9])\s*자리/.exec(story);
