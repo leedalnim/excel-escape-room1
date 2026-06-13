@@ -511,7 +511,7 @@
     .aside-close{display:block;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
       font-family:var(--mono);font-size:12px;padding:10px;cursor:pointer;border-radius:0}
     .scroll,.composer{padding-left:5%;padding-right:5%}
-    .topbar{gap:8px;padding:12px 14px;flex-wrap:wrap}
+    .topbar{gap:8px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));flex-wrap:wrap}
     .topbar .title{font-size:16px}
     .topbar .step{font-size:10px}
   }
