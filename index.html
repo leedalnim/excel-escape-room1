@@ -152,6 +152,16 @@
   /* 쉬운 입력 모드: 탭 가능한 키워드 — 흰색 글자 + 흰색 은은한 밑줄 */
   .tap-word{border-bottom:1px dashed rgba(243,239,230,.5);cursor:pointer;border-radius:2px;transition:background .15s}
   .tap-word:hover{background:rgba(243,239,230,.12)}
+  /* 상황 코드 적용 헬퍼 */
+  .situ-apply{max-width:680px;margin:14px auto 0;background:rgba(90,125,154,.08);border:1px dashed var(--blue);
+    border-radius:6px;padding:13px 15px}
+  .situ-title{font-size:13px;color:#9cc0dd;margin-bottom:10px}
+  .situ-title b{color:#cfe3f4}
+  .situ-items{display:flex;flex-wrap:wrap;gap:8px}
+  .situ-item{background:var(--panel2);border:1px solid var(--blue);color:#bcd8ef;font-family:var(--body);
+    font-size:13px;padding:8px 14px;border-radius:30px;cursor:pointer;transition:.2s}
+  .situ-item:hover{background:var(--blue);color:#0b0c10;transform:translateY(-2px)}
+  .situ-empty{font-size:12px;color:var(--ink-dim);font-style:italic}
   /* 지문 내 아이템 사용 버튼 (열쇠 등) */
   .use-inline{max-width:680px;margin:14px auto 0}
   .use-inline-btn{background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);color:var(--gold);
@@ -1378,6 +1388,25 @@ const Game = {
        !/풀고|열렸|열고|들어왔|들어간|해제/.test(story) &&
        /자물쇠|도어락|비밀번호|암호|숫자/.test(story)){
       e.appendChild(this.buildLock(parseInt(dm[1]), story));
+    }
+
+    // 상황 코드 → 보유 아이템을 탭해서 적용 (상황코드+아이템코드 자동 입력)
+    const scm=story.match(/상황\s*코드\s*[:：]\s*([A-Za-z]+)/);
+    if(scm){
+      const sc=scm[1];
+      const box=document.createElement('div'); box.className='situ-apply';
+      const t=document.createElement('div'); t.className='situ-title'; t.innerHTML='이 상황에 아이템 적용 <b>('+this.esc(sc)+' + 아이템)</b>';
+      const grid=document.createElement('div'); grid.className='situ-items';
+      const codes=Object.keys(this.inv);
+      if(!codes.length){ grid.innerHTML='<span class="situ-empty">보유한 아이템이 없습니다</span>'; }
+      else codes.forEach(code=>{ const b=document.createElement('button'); b.className='situ-item';
+        b.textContent=this.inv[code].name||code;
+        b.onclick=()=>{ const kw=sc+code; if(this.canResolve(kw)){
+            if(window.innerWidth<=880){ const a=document.getElementById('aside'),bk=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(bk)bk.classList.remove('open'); }
+            this.lookupKeyword(kw,false);
+          } else this.toast('그 아이템으로는 해결되지 않습니다'); };
+        grid.appendChild(b); });
+      box.appendChild(t); box.appendChild(grid); e.appendChild(box);
     }
 
     // 분기 코드가 announce된 지문이면 자동 저장하고 "저장됨" 배지 표시
