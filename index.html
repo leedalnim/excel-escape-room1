@@ -101,6 +101,8 @@
   .chapter-chip:hover{border-color:var(--accent-dim);transform:translateY(-2px)}
   .chapter-chip .cno{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.1em}
   .chapter-chip .ctit{font-family:var(--serif);font-size:15px;font-weight:700}
+  .chapter-chip .cend{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.03em}
+  .chapter-chip .cend+.cmark{margin-left:8px}
   .chapter-chip .cmark{margin-left:auto;font-size:12px}
   .chapter-chip.cleared .cmark{color:var(--ok)}
   .chapter-chip.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
@@ -770,9 +772,6 @@ const Game = {
       let s=null; if(has){ try{ s=this.decode(localStorage.getItem('excel_escape_save')); }catch(e){} }
       if(s){ const meta=ACT_META[s.act]||{no:s.act,title:''}; const loc=s.here||s.lastKw||'';
         let html='<span class="ri-act">'+this.esc(meta.no+'. '+meta.title)+'</span>'+(loc&&loc!=='시작'?' · <b>'+this.esc(loc)+'</b> 에서 이어서':' 이어서');
-        const eTot=(DATA.act2&&DATA.act2.endings)?Object.keys(DATA.act2.endings).length:6;
-        const eGot=(s.endings||[]).length;
-        if(eGot || ACT_ORDER.indexOf(s.act)>=1) html+='<span class="ri-end">♠ 수집 엔딩 '+eGot+'/'+eTot+'</span>';
         ri.innerHTML=html; ri.style.display='block';
       } else ri.style.display='none';
     }
@@ -797,14 +796,17 @@ const Game = {
   renderChapters(){
     const wrap=document.getElementById('chapters'); wrap.innerHTML='';
     const maxIdx=this.maxUnlockedIndex();
+    let endGot=0; try{ const s=this.decode(localStorage.getItem('excel_escape_save')); if(s) endGot=(s.endings||[]).length; }catch(e){}
     ACT_ORDER.forEach((a,i)=>{
       if(!DATA[a]) return;
       const meta=ACT_META[a]||{no:a,title:''};
       const cleared=this.cleared.includes(a), unlocked=i<=maxIdx;
+      const eTot=(DATA[a].endings)?Object.keys(DATA[a].endings).length:0;
       const c=document.createElement('div');
       c.className='chapter-chip'+(unlocked?'':' locked')+(cleared?' cleared':'');
       c.innerHTML='<span class="cno">'+this.esc((meta.no||'').replace('ACT ',''))+'</span>'
         +'<span class="ctit">'+this.esc(meta.title||'')+'</span>'
+        +(eTot?'<span class="cend">♠ '+endGot+'/'+eTot+'</span>':'')
         +'<span class="cmark">'+(cleared?'✓':(unlocked?'':'🔒'))+'</span>';
       if(unlocked) c.onclick=()=>this.start(a);
       wrap.appendChild(c);
