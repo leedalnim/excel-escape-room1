@@ -196,9 +196,13 @@
   .inv-item.picked{border-color:var(--gold);background:rgba(207,166,78,.18);color:var(--gold);font-weight:700}
   .inv-item .code{font-family:var(--mono);font-size:9px;color:#8f94a6;display:block}
   /* 아이템 사용 버튼 */
-  .item-use{width:100%;margin:0 0 8px;background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);
+  .item-actions{display:flex;gap:8px;margin:0 0 8px}
+  .item-use{flex:1;background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);
     color:var(--gold);font-family:var(--body);font-size:13px;font-weight:700;padding:9px;border-radius:4px;cursor:pointer;transition:.2s}
   .item-use:hover{background:var(--gold);color:#0b0c10}
+  .item-drop{background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--body);font-size:13px;padding:9px 12px;border-radius:4px;cursor:pointer;transition:.2s}
+  .item-drop:hover{border-color:var(--bad);color:var(--bad)}
   /* 조합 */
   .inv-combine-btn{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
     font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:4px 9px;border-radius:20px;cursor:pointer;transition:.2s}
@@ -565,7 +569,10 @@
       </div>
       <div class="detail-box">
         <div class="detail-out" id="detailOut"></div>
-        <button class="item-use" id="useBtn" style="display:none" onclick="Game.useSelectedItem()">🔑 이 아이템 사용하기</button>
+        <div class="item-actions" id="itemActions" style="display:none">
+          <button class="item-use" id="useBtn" onclick="Game.useSelectedItem()">🔑 사용하기</button>
+          <button class="item-drop" id="dropBtn" onclick="Game.dropSelectedItem()">🗑 버리기</button>
+        </div>
         <div class="detail-row">
           <span class="prompt">+</span>
           <input id="detailInput" autocomplete="off" spellcheck="false" placeholder="아이템 코드 입력 후 Enter로 추가">
@@ -827,6 +834,15 @@ const Game = {
       const ire=/아이템\s*코드\s*[:：]\s*(\w+)/g; let im;
       while((im=ire.exec(text))){ const c=im[1];
         if(this.data.items[c] && !this.inv[c]){ this.addItem(c); this.flashItem(c); this.toast('획득 — '+(this.data.items[c].name||c)); } }
+    }
+    // "더 이상 사용하지 않습니다 … 삭제" 안내가 뜨면, 언급된 보유 아이템 자동 정리
+    if(/더\s*이상\s*사용하지\s*않|삭제해\s*주세요/.test(text)){
+      Object.keys(this.inv).forEach(c=>{ const nm=this.inv[c].name; if(!nm) return;
+        const pat=nm.trim().split(/\s+/).map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*');
+        let hit=false; try{ hit=new RegExp('(?<![가-힣0-9A-Za-z])'+pat+'(?![가-힣0-9])').test(text); }
+        catch(e){ hit=text.replace(/\s/g,'').indexOf(nm.replace(/\s/g,''))>=0; }
+        if(hit){ delete this.inv[c]; this.toast('정리 — '+nm); } });
+      this.renderInv();
     }
 
     // track visited hubs (places you can return to) — parent = where you came from
@@ -1499,6 +1515,12 @@ const Game = {
   },
   // 아이템 사용 (코드를 키워드로 입력 = 사용)
   useSelectedItem(){ const c=this.viewItem; if(!c) return; if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); a.classList.remove('open'); if(b)b.classList.remove('open'); } this.lookupKeyword(c,false); },
+  // 아이템 버리기 (수동 삭제)
+  dropSelectedItem(){ const c=this.viewItem; if(!c||!this.inv[c]) return; const nm=this.inv[c].name||c;
+    delete this.inv[c]; this.viewItem=null;
+    document.getElementById('detailInput').value=''; document.getElementById('detailOut').textContent='';
+    const acts=document.getElementById('itemActions'); if(acts) acts.style.display='none';
+    this.renderInv(); this.autoSave(); this.toast('버림 — '+nm); },
   // 조합 모드
   toggleCombine(){ this.combineMode=!this.combineMode; this.combineSel=[];
     document.getElementById('combineBar').style.display=this.combineMode?'block':'none';
@@ -1544,11 +1566,11 @@ const Game = {
   detailLookup(){
     const v=(document.getElementById('detailInput').value||'').trim();
     const out=document.getElementById('detailOut'); out.className='detail-out';
-    const useBtn=document.getElementById('useBtn');
+    const acts=document.getElementById('itemActions');
     const it=this.data.items[v];
-    // 보유 중인 아이템을 볼 때만 '사용하기' 버튼 노출
-    if(it && this.inv[v] && useBtn){ this.viewItem=v; useBtn.style.display='block'; }
-    else { this.viewItem=null; if(useBtn) useBtn.style.display='none'; }
+    // 보유 중인 아이템을 볼 때만 사용/버리기 버튼 노출
+    if(it && this.inv[v]){ this.viewItem=v; if(acts) acts.style.display='flex'; }
+    else { this.viewItem=null; if(acts) acts.style.display='none'; }
     if(!v){ out.textContent=''; return; }
     if(it){ out.textContent=(it.name && !/^HIDDEN/i.test(it.name)?('['+it.name+']\n'):'')+it.desc; }
     else { out.textContent=''; }
