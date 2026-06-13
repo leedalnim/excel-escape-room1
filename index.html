@@ -126,6 +126,9 @@
   .entry{max-width:680px;margin:0 auto 30px;animation:fade .6s ease}
   @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   .entry .you{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--blue);margin-bottom:8px}
+  .loc-banner{display:inline-block;margin:0 0 14px;background:rgba(90,125,154,.16);border:1px solid var(--blue);
+    border-radius:30px;padding:7px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#9cc0dd}
+  .loc-banner b{color:#cfe3f4;font-family:var(--body);font-size:15px;font-weight:700;letter-spacing:0}
   .entry .you b{color:var(--ink)}
   .passage{font-size:18.5px;white-space:pre-wrap;color:var(--ink)}
   .passage.notice{border-left:2px solid var(--gold);padding-left:18px;color:#d8cba0;font-size:15px;font-style:italic;opacity:.92}
@@ -847,13 +850,17 @@ const Game = {
 
     // track visited hubs (places you can return to) — parent = where you came from
     const realKw=(this.history[this.history.length-1]||{}).kw||'';
+    let placeName='';
     if(this.isHub(realKw, this.parseChoices(text), text)){
-      if(!this.places.includes(realKw)){ this.places.push(realKw); this.parents[realKw]=this.here||''; }
+      const fresh=!this.places.includes(realKw);
+      if(fresh){ this.places.push(realKw); this.parents[realKw]=this.here||''; }
+      const moved=(this.here!==realKw);
       this.here=realKw; this.expandPath(realKw);
+      if(moved) placeName=realKw+(fresh?'':' · 다시 옴');   // 장소 이동 시에만 배너
     }
     this.renderPlaces();
 
-    this.printEntry(echoKw, text, {});
+    this.printEntry(echoKw, text, {place:placeName});
     this.updateStep();
   },
 
@@ -1323,8 +1330,11 @@ const Game = {
   },
 
   printEntry(echoKw, text, opt){
+    opt=opt||{};
     const scroll=document.getElementById('scroll');
     const e=document.createElement('div'); e.className='entry';
+    if(opt.place){ const loc=document.createElement('div'); loc.className='loc-banner';
+      loc.innerHTML='📍 <b>'+this.esc(opt.place)+'</b> 으로 이동'; e.appendChild(loc); }
     if(echoKw){ const y=document.createElement('div'); y.className='you';
       y.innerHTML='입력 &rsaquo; <b>'+this.esc(echoKw)+'</b>'; e.appendChild(y); }
 
