@@ -138,6 +138,11 @@
   .choices .chip:hover{background:var(--accent-dim);border-color:var(--accent);transform:translateY(-2px)}
   .choices .chip.hidden{color:var(--gold);border-color:var(--gold);border-style:dashed;cursor:pointer;font-weight:700}
   .choices .chip.hidden:hover{background:rgba(207,166,78,.12);transform:translateY(-2px)}
+  /* 힌트 칩 — 차분한 정보 스타일 / 정답 칩 — 점선 경고 스타일 (일반 선택지와 구분) */
+  .choices .chip.hint-chip{color:var(--blue);background:rgba(90,125,154,.1);border-color:var(--blue);font-size:13px}
+  .choices .chip.hint-chip:hover{background:var(--blue);color:#0b0c10;border-color:var(--blue);transform:translateY(-2px)}
+  .choices .chip.answer-chip{color:var(--ink-dim);background:transparent;border-color:var(--line);border-style:dashed;font-size:13px}
+  .choices .chip.answer-chip:hover{background:rgba(176,70,58,.15);border-color:var(--bad);color:#e3a59c;transform:translateY(-2px)}
   .hidden-hint{max-width:680px;margin:12px auto 0;font-size:13px;color:#e3cf95;
     background:rgba(207,166,78,.08);border:1px dashed var(--gold);border-radius:4px;padding:11px 15px;line-height:1.55}
   .hidden-hint b{color:var(--gold)}
@@ -171,7 +176,29 @@
   .inv-item{font-family:var(--body);font-size:13px;background:var(--panel2);border:1px solid var(--line);
     padding:6px 12px;border-radius:3px;cursor:pointer;transition:.2s;position:relative}
   .inv-item:hover{border-color:var(--gold);color:var(--gold)}
+  .inv-item.picked{border-color:var(--gold);background:rgba(207,166,78,.18);color:var(--gold);font-weight:700}
   .inv-item .code{font-family:var(--mono);font-size:9px;color:#8f94a6;display:block}
+  /* 아이템 사용 버튼 */
+  .item-use{width:100%;margin:0 0 8px;background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);
+    color:var(--gold);font-family:var(--body);font-size:13px;font-weight:700;padding:9px;border-radius:4px;cursor:pointer;transition:.2s}
+  .item-use:hover{background:var(--gold);color:#0b0c10}
+  /* 조합 */
+  .inv-combine-btn{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:4px 9px;border-radius:20px;cursor:pointer;transition:.2s}
+  .inv-combine-btn:hover,.inv-combine-btn.on{border-color:var(--gold);color:var(--gold)}
+  .combine-bar{background:rgba(207,166,78,.07);border:1px dashed var(--gold);border-radius:5px;padding:11px 12px;margin-bottom:12px}
+  .cb-title{font-size:11.5px;color:var(--ink-dim);margin-bottom:9px;line-height:1.5}
+  .cb-title b{color:var(--gold)}
+  .cb-list{font-size:12px;color:var(--ink);line-height:1.9;margin-bottom:10px;word-break:break-all}
+  .cb-empty{color:var(--ink-dim);font-style:italic}
+  .cb-item{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:2px 8px;white-space:nowrap}
+  .cb-item b{font-family:var(--mono);color:var(--gold);font-size:11px}
+  .cb-plus,.cb-eq{color:var(--gold);margin:0 5px;font-family:var(--mono)}
+  .cb-sum{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--gold)}
+  .cb-actions{display:flex;gap:8px}
+  .cb-run{flex:1;background:var(--accent);border:1px solid #d8483a;color:#fff;font-family:var(--mono);font-size:12px;padding:9px;border-radius:4px;cursor:pointer}
+  .cb-run:hover:not(:disabled){background:#d8483a}.cb-run:disabled{opacity:.4;cursor:default}
+  .cb-cancel{background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);font-family:var(--mono);font-size:12px;padding:9px 14px;border-radius:4px;cursor:pointer}
   .inv-empty{font-size:12px;color:#969ab0;font-style:italic}
   .place-grid{display:flex;flex-wrap:wrap;gap:8px}
   .place-chip{font-family:var(--body);font-size:13px;background:var(--panel2);border:1px solid var(--line);
@@ -501,16 +528,27 @@
       <button class="map-open" id="mapOpenBtn" onclick="Game.openMap()" style="display:none">🗺 지도 크게 보기</button>
     </div>
     <div class="sect">
-      <h4>인벤토리 <span class="ct" id="invCt">0</span></h4>
+      <h4>인벤토리 <span class="ct" id="invCt">0</span>
+        <button class="inv-combine-btn" id="combineBtn" onclick="Game.toggleCombine()">🔧 조합</button>
+      </h4>
       <div class="inv-grid" id="invGrid"><span class="inv-empty">아직 아이템이 없습니다</span></div>
+      <div class="combine-bar" id="combineBar" style="display:none">
+        <div class="cb-title">합칠 아이템을 탭하세요 — <b>코드 숫자가 더해집니다</b></div>
+        <div class="cb-list" id="combineList"><span class="cb-empty">선택된 아이템 없음</span></div>
+        <div class="cb-actions">
+          <button class="cb-run" id="combineRun" onclick="Game.runCombine()" disabled>조합하기</button>
+          <button class="cb-cancel" onclick="Game.toggleCombine()">취소</button>
+        </div>
+      </div>
       <div class="detail-box">
+        <div class="detail-out" id="detailOut"></div>
+        <button class="item-use" id="useBtn" style="display:none" onclick="Game.useSelectedItem()">🔑 이 아이템 사용하기</button>
         <div class="detail-row">
           <span class="prompt">+</span>
           <input id="detailInput" autocomplete="off" spellcheck="false" placeholder="아이템 코드 입력 후 Enter로 추가">
         </div>
-        <div class="detail-out" id="detailOut"></div>
       </div>
-      <div class="inv-tip">아이템 코드를 적고 <b>Enter</b>를 누르면 인벤토리에 추가됩니다. 추가된 칩을 누르면 상세 설명을 볼 수 있어요.</div>
+      <div class="inv-tip">아이템 칩을 누르면 설명·<b>사용</b> 버튼이 나옵니다. 여러 아이템을 합치려면 <b>🔧 조합</b>을 누르세요.</div>
     </div>
     <div class="sect" id="sheetSect" style="display:none">
       <h4>자료 시트 <span class="ct" id="sheetCt">0</span></h4>
@@ -611,7 +649,7 @@ const ACT_META = {
 };
 
 const Game = {
-  act:null, data:null, level:0, history:[], inv:{}, endings:{}, notes:'', places:[], parents:{}, here:'', lastKw:'', adj:{}, hubSet:null, cleared:[], sheetsSeen:[], expanded:null, talkState:null, viewpoint:'belkin',
+  act:null, data:null, level:0, history:[], inv:{}, endings:{}, notes:'', places:[], parents:{}, here:'', lastKw:'', adj:{}, hubSet:null, cleared:[], sheetsSeen:[], expanded:null, talkState:null, viewpoint:'belkin', combineMode:false, combineSel:null, viewItem:null,
 
   start(key, resume){
     this.data = DATA[key]; this.act = key;
@@ -1224,6 +1262,8 @@ const Game = {
         if(/^ctrl\+z$/i.test(ch)){ b.className='chip back'; b.textContent='↩ 돌아가기'; b.onclick=()=>this.undo(); }
         else if(ch==='?'){ hasHidden=true; b.className='chip hidden'; b.textContent='?';
           b.title='숨겨진 키워드 — 아래 입력창에 직접 입력하세요'; b.onclick=()=>this.focusInput(); }
+        else if(/^힌트/.test(ch)){ b.className='chip hint-chip'; b.textContent='💡 '+ch; b.onclick=()=>this.lookupKeyword(ch,false); }
+        else if(/^정답/.test(ch)){ b.className='chip answer-chip'; b.textContent='🔑 '+ch+' 보기'; b.onclick=()=>this.lookupKeyword(ch,false); }
         else { b.className='chip'; b.textContent=ch; b.onclick=()=>this.lookupKeyword(ch,false); }
         c.appendChild(b);
       });
@@ -1324,12 +1364,40 @@ const Game = {
   renderInv(){
     const g=document.getElementById('invGrid'); const codes=Object.keys(this.inv);
     document.getElementById('invCt').textContent=codes.length;
+    const cbtn=document.getElementById('combineBtn'); if(cbtn) cbtn.style.display=codes.length>1?'inline-block':'none';
     if(!codes.length){ g.innerHTML='<span class="inv-empty">아직 아이템이 없습니다</span>'; return; }
     g.innerHTML='';
-    codes.forEach(c=>{ const d=document.createElement('div'); d.className='inv-item'; d.dataset.code=c;
+    const sel=this.combineSel||[];
+    codes.forEach(c=>{ const d=document.createElement('div'); d.className='inv-item'+(this.combineMode&&sel.includes(c)?' picked':''); d.dataset.code=c;
       d.innerHTML=this.esc(this.inv[c].name)+'<span class="code">'+c+'</span>';
-      d.onclick=()=>{ document.getElementById('detailInput').value=c; this.detailLookup(); };
+      if(this.combineMode){ d.onclick=()=>this.pickCombine(c); }
+      else { d.onclick=()=>{ document.getElementById('detailInput').value=c; this.detailLookup(); }; }
       g.appendChild(d); });
+  },
+  // 아이템 사용 (코드를 키워드로 입력 = 사용)
+  useSelectedItem(){ const c=this.viewItem; if(!c) return; if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); a.classList.remove('open'); if(b)b.classList.remove('open'); } this.lookupKeyword(c,false); },
+  // 조합 모드
+  toggleCombine(){ this.combineMode=!this.combineMode; this.combineSel=[];
+    document.getElementById('combineBar').style.display=this.combineMode?'block':'none';
+    const b=document.getElementById('combineBtn'); if(b) b.classList.toggle('on',this.combineMode);
+    this.renderInv(); this.renderCombine(); },
+  pickCombine(c){ this.combineSel=this.combineSel||[]; const i=this.combineSel.indexOf(c);
+    if(i>=0) this.combineSel.splice(i,1); else this.combineSel.push(c); this.renderInv(); this.renderCombine(); },
+  renderCombine(){
+    const list=document.getElementById('combineList'); const run=document.getElementById('combineRun'); if(!list) return;
+    const sel=this.combineSel||[];
+    if(!sel.length){ list.innerHTML='<span class="cb-empty">선택된 아이템 없음</span>'; run.disabled=true; run.textContent='조합하기'; return; }
+    const sum=sel.reduce((s,c)=>s+(parseInt(c,10)||0),0);
+    list.innerHTML=sel.map(c=>'<span class="cb-item">'+this.esc(this.inv[c]?this.inv[c].name:c)+' <b>'+c+'</b></span>').join('<span class="cb-plus">+</span>')
+      +'<span class="cb-eq">=</span><span class="cb-sum">'+sum+'</span>';
+    run.disabled=sel.length<2; run.textContent='합 '+sum+' 조합하기';
+  },
+  runCombine(){ const sel=this.combineSel||[]; if(sel.length<2) return;
+    const sum=sel.reduce((s,c)=>s+(parseInt(c,10)||0),0);
+    this.combineMode=false; this.combineSel=[]; document.getElementById('combineBar').style.display='none';
+    const b=document.getElementById('combineBtn'); if(b) b.classList.remove('on'); this.renderInv();
+    if(window.innerWidth<=880){ const a=document.getElementById('aside'),bk=document.getElementById('asideBackdrop'); a.classList.remove('open'); if(bk)bk.classList.remove('open'); }
+    this.lookupKeyword(String(sum),false);
   },
   flashItem(code){ const el=document.querySelector('.inv-item[data-code="'+(window.CSS&&CSS.escape?CSS.escape(code):code)+'"]');
     if(el){ el.classList.add('added'); setTimeout(()=>el.classList.remove('added'),1400); } },
@@ -1349,8 +1417,12 @@ const Game = {
   detailLookup(){
     const v=(document.getElementById('detailInput').value||'').trim();
     const out=document.getElementById('detailOut'); out.className='detail-out';
-    if(!v){ out.textContent=''; return; }
+    const useBtn=document.getElementById('useBtn');
     const it=this.data.items[v];
+    // 보유 중인 아이템을 볼 때만 '사용하기' 버튼 노출
+    if(it && this.inv[v] && useBtn){ this.viewItem=v; useBtn.style.display='block'; }
+    else { this.viewItem=null; if(useBtn) useBtn.style.display='none'; }
+    if(!v){ out.textContent=''; return; }
     if(it){ out.textContent=(it.name && !/^HIDDEN/i.test(it.name)?('['+it.name+']\n'):'')+it.desc; }
     else { out.textContent=''; }
   },
