@@ -952,17 +952,18 @@ const Game = {
     let s=off, en=off; while(s>0&&isW(t[s-1])) s--; while(en<t.length&&isW(t[en])) en++;
     const w=t.slice(s,en).trim(); return w.length?w:null;
   },
-  // 해당 단어가 실제로 유효한 키워드/아이템/시트인지
+  // 탭으로 진행 가능한 단어인지 (lookupKeyword가 처리하는 것: 지문 키워드/시트)
   canResolve(w){
     if(!w) return false;
     if(this.findPassage(w)!==null) return true;
-    if(this.data.items&&this.data.items[w]) return true;
     if(this.data.sheets&&this.data.sheets[w]) return true;
     return false;
   },
-  // 단어(+조사)를 유효 키워드로 환원 — "냄비를"→"냄비"
+  // 단어에서 한국어 조사만 떼어 유효 키워드로 환원 — "냄비를"→"냄비" (임의 절단 금지)
   resolveWord(w){
-    for(let i=0;i<=3;i++){ const s=i?w.slice(0,w.length-i):w; if(s.length>=1 && this.canResolve(s)) return s; }
+    if(this.canResolve(w)) return w;
+    const J=['으로서','으로써','에서는','에게서','이라는','이라고','라는','라고','으로','에서','에게','한테','까지','부터','조차','마저','이나','이란','은','는','이','가','을','를','에','의','와','과','도','만','로','란'];
+    for(const p of J){ if(w.length>p.length && w.endsWith(p)){ const s=w.slice(0,w.length-p.length); if(this.canResolve(s)) return s; } }
     return null;
   },
   // 지문 → HTML (아이템/시트 코드 버튼 + 쉬운모드 단어 탭/밑줄)
