@@ -770,7 +770,7 @@ const Game = {
         let html='<span class="ri-act">'+this.esc(meta.no+'. '+meta.title)+'</span>'+(loc&&loc!=='시작'?' · <b>'+this.esc(loc)+'</b> 에서 이어서':' 이어서');
         const eTot=(DATA.act2&&DATA.act2.endings)?Object.keys(DATA.act2.endings).length:6;
         const eGot=(s.endings||[]).length;
-        if(eGot) html+='<span class="ri-end">♠ 수집 엔딩 '+eGot+'/'+eTot+'</span>';
+        if(eGot || ACT_ORDER.indexOf(s.act)>=1) html+='<span class="ri-end">♠ 수집 엔딩 '+eGot+'/'+eTot+'</span>';
         ri.innerHTML=html; ri.style.display='block';
       } else ri.style.display='none';
     }
@@ -876,10 +876,12 @@ const Game = {
     }
     // "더 이상 사용하지 않습니다 … 삭제" 안내가 뜨면, 언급된 보유 아이템 자동 정리
     if(/더\s*이상\s*사용하지\s*않|삭제해\s*주세요/.test(text)){
+      // 삭제 안내가 든 ※ 구절만 검사 (획득 헤더 "[NAME 획득]"의 아이템명 오삭제 방지)
+      const noticeText=String(text).split('※').filter(seg=>/더\s*이상\s*사용하지\s*않|삭제해\s*주세요/.test(seg)).join('\n');
       Object.keys(this.inv).forEach(c=>{ const nm=this.inv[c].name; if(!nm) return;
         const pat=nm.trim().split(/\s+/).map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*');
-        let hit=false; try{ hit=new RegExp('(?<![가-힣0-9A-Za-z])'+pat+'(?![가-힣0-9])').test(text); }
-        catch(e){ hit=text.replace(/\s/g,'').indexOf(nm.replace(/\s/g,''))>=0; }
+        let hit=false; try{ hit=new RegExp('(?<![가-힣0-9A-Za-z])'+pat+'(?![가-힣0-9])').test(noticeText); }
+        catch(e){ hit=noticeText.replace(/\s/g,'').indexOf(nm.replace(/\s/g,''))>=0; }
         if(hit){ delete this.inv[c]; this.toast('정리 — '+nm); } });
       this.renderInv();
     }
