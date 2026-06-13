@@ -1468,7 +1468,7 @@ const Game = {
     const matches=[...body.matchAll(/\(([^()]*)\)/g)];
     if(!matches.length) return [];
     const inside=matches[matches.length-1][1];
-    return inside.split('/').map(s=>s.trim()).filter(Boolean);
+    return inside.split(/[/,]/).map(s=>s.trim()).filter(Boolean);
   },
 
   undo(){
