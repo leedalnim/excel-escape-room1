@@ -146,9 +146,9 @@
   .hidden-hint{max-width:680px;margin:12px auto 0;font-size:13px;color:#e3cf95;
     background:rgba(207,166,78,.08);border:1px dashed var(--gold);border-radius:4px;padding:11px 15px;line-height:1.55}
   .hidden-hint b{color:var(--gold)}
-  /* 쉬운 입력 모드: 탭 가능한 단서어 */
-  .tap-word{color:var(--gold);border-bottom:1px dotted var(--gold);cursor:pointer;padding:0 1px;border-radius:2px;transition:.15s}
-  .tap-word:hover{background:rgba(207,166,78,.18)}
+  /* 쉬운 입력 모드: 탭 가능한 단서어 — 장식 없이 클릭만 (밑줄/색 없음) */
+  .tap-word{cursor:pointer;border-radius:2px;transition:background .15s}
+  .tap-word:hover{background:rgba(207,166,78,.14)}
   /* 지문 내 아이템 사용 버튼 (열쇠 등) */
   .use-inline{max-width:680px;margin:14px auto 0}
   .use-inline-btn{background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);color:var(--gold);
@@ -941,6 +941,25 @@ const Game = {
   updateEzBtn(){ const b=document.getElementById('ezToggle'); if(b){ b.textContent='✨ 쉬운입력 '+(this.easyMode?'ON':'OFF'); b.classList.toggle('on',this.easyMode); } },
   toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
     t.textContent=msg; t.classList.add('show'); clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'),1700); },
+  // 탭 좌표에서 단어 추출 (쉬운 입력 모드)
+  wordAtPoint(x,y){
+    let node,off;
+    if(document.caretRangeFromPoint){ const r=document.caretRangeFromPoint(x,y); if(!r) return null; node=r.startContainer; off=r.startOffset; }
+    else if(document.caretPositionFromPoint){ const c=document.caretPositionFromPoint(x,y); if(!c) return null; node=c.offsetNode; off=c.offset; }
+    else return null;
+    if(!node || node.nodeType!==3) return null;
+    const t=node.textContent, isW=c=>/[0-9A-Za-z가-힣]/.test(c||'');
+    let s=off, en=off; while(s>0&&isW(t[s-1])) s--; while(en<t.length&&isW(t[en])) en++;
+    const w=t.slice(s,en).trim(); return w.length?w:null;
+  },
+  // 해당 단어가 실제로 유효한 키워드/아이템/시트인지
+  canResolve(w){
+    if(!w) return false;
+    if(this.findPassage(w)!==null) return true;
+    if(this.data.items&&this.data.items[w]) return true;
+    if(this.data.sheets&&this.data.sheets[w]) return true;
+    return false;
+  },
 
   // ----- 시트(자료) 채널 -----
   openSheet(code){
@@ -1253,12 +1272,9 @@ const Game = {
 
     const p=document.createElement('div');
     p.className='passage'+(opt.bad?' bad':'')+(opt.notice?' notice':'');
-    let body=this.esc(story);
-    // 쉬운 입력 모드: 지문 속 따옴표 단서어를 탭 가능하게 (버튼 주입 전에 처리)
-    if(this.easyMode){
-      body=body.replace(/"([^"\n]{1,10})"/g,(m,w)=> /\s/.test(w)?m:'<span class="tap-word" data-kw="'+w+'">"'+w+'"</span>');
-    }
-    let shtml=body
+    // 쉬운 입력 모드에선 지문 아무 단어나 탭하면 시도됨(좌표 기반) — 별도 장식/래핑 없음
+    if(this.easyMode) p.classList.add('tappable');
+    let shtml=this.esc(story)
       .replace(/아이템\s*코드\s*[:：]\s*(\w+)/g,(m,c)=> this.data.items[c]
         ? '아이템 코드 : <button class="code-btn item'+(this.inv[c]?' got':'')+'" data-type="item" data-code="'+c+'">'+c+(this.inv[c]?' ✓':' ⊕ 획득')+'</button>'
         : m)
@@ -1305,18 +1321,7 @@ const Game = {
         c.appendChild(b);
       });
       e.appendChild(c);
-      // 숨겨진 키워드 안내 — 매번 반복되어 흐름이 끊기므로 처음 2번만 노출
-      if(hasHidden){
-        let seen=0; try{ seen=parseInt(localStorage.getItem('excel_hh')||'0',10)||0; }catch(e){}
-        if(seen<2){
-          const h=document.createElement('div'); h.className='hidden-hint';
-          h.innerHTML= this.easyMode
-            ? '🔒 <b>숨겨진 키워드</b>가 있어요. 지문 속 <b>밑줄 친 단어</b>를 탭하거나 직접 입력하세요.'
-            : '🔒 <b>숨겨진 키워드</b>가 있습니다. 지문 속 단서를 찾아 <b>아래 입력창</b>에 직접 입력하세요.';
-          e.appendChild(h);
-          try{ localStorage.setItem('excel_hh', String(seen+1)); }catch(e){}
-        }
-      }
+      // (숨겨진 키워드 안내 박스는 제거 — 하단 입력창 안내로 충분, 흐름 끊김 방지)
     }
 
     // 보유한 아이템이 '필요하다'고 안내하는 지문 → 코드 입력/오답 없이 바로 '사용' 버튼
@@ -1542,10 +1547,12 @@ document.getElementById('detailInput').addEventListener('input',()=>Game.detailL
 document.getElementById('detailInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); Game.addByInput(); }});
 document.getElementById('notepad').addEventListener('input',()=>Game.syncNotes());
 document.getElementById('scroll').addEventListener('click',e=>{
-  const tw=e.target.closest('.tap-word'); if(tw){ Game.lookupKeyword(tw.dataset.kw,false); return; }
-  const b=e.target.closest('.code-btn'); if(!b) return;
-  if(b.dataset.type==='sheet') Game.openSheet(b.dataset.code);
-  else Game.grabItem(b.dataset.code, b);
+  const b=e.target.closest('.code-btn');
+  if(b){ if(b.dataset.type==='sheet') Game.openSheet(b.dataset.code); else Game.grabItem(b.dataset.code, b); return; }
+  if(e.target.closest('button,a,.letter-paper')) return;
+  // 쉬운 입력 모드: 지문 아무 단어나 탭 → 유효한 키워드면 진행 (장식 없음, 오답은 무반응)
+  if(Game.easyMode){ const p=e.target.closest('.passage.tappable'); if(p && !window.getSelection().toString()){
+    const w=Game.wordAtPoint(e.clientX,e.clientY); if(w && Game.canResolve(w)) Game.lookupKeyword(w,false); } }
 });
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); Game.undo(); }});
 // 모달 바깥(배경) 클릭 시 닫기 + ESC로 닫기
