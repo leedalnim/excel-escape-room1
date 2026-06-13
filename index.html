@@ -1516,11 +1516,15 @@ const Game = {
     run.disabled=sel.length<2; run.textContent='합 '+sum+' 조합하기';
   },
   runCombine(){ const sel=this.combineSel||[]; if(sel.length<2) return;
-    const sum=sel.reduce((s,c)=>s+(parseInt(c,10)||0),0);
+    const sum=String(sel.reduce((s,c)=>s+(parseInt(c,10)||0),0));
+    const ok=this.canResolve(sum);
+    if(!ok){ this.toast('그렇게는 조합되지 않습니다'); this.renderCombine(); return; }   // 실패: 부품 유지
+    // 성공: 조합에 쓰인 부품은 인벤토리에서 제거 (새 아이템으로 합쳐짐)
+    sel.forEach(c=>{ delete this.inv[c]; });
     this.combineMode=false; this.combineSel=[]; document.getElementById('combineBar').style.display='none';
     const b=document.getElementById('combineBtn'); if(b) b.classList.remove('on'); this.renderInv();
     if(window.innerWidth<=880){ const a=document.getElementById('aside'),bk=document.getElementById('asideBackdrop'); a.classList.remove('open'); if(bk)bk.classList.remove('open'); }
-    this.lookupKeyword(String(sum),false);
+    this.lookupKeyword(sum,false);
   },
   flashItem(code){ const el=document.querySelector('.inv-item[data-code="'+(window.CSS&&CSS.escape?CSS.escape(code):code)+'"]');
     if(el){ el.classList.add('added'); setTimeout(()=>el.classList.remove('added'),1400); } },
