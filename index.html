@@ -1774,7 +1774,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.q
 Game.loadEasy();
 // 낯선 단어 일괄 치환 (게시판·힌트·정답 등 표시 텍스트)
 function relabelData(o){
-  if(typeof o==='string') return o.replace(/미씽/g,'걸레질');
+  if(typeof o==='string') return o.replace(/미씽/g,'걸레질').replace(/싸이코패스/g,'사이코패스');
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
