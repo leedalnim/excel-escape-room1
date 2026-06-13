@@ -780,7 +780,9 @@ const Game = {
     else this.start(ACT_ORDER[0]);
   },
   beginNew(){
-    if(this.hasSave() && !confirm('저장된 진행이 있습니다. 처음부터 다시 시작할까요?')) return;
+    if(this.hasSave() && !confirm('처음부터 다시 시작할까요?\n저장된 진행과 챕터 해금 기록이 초기화됩니다.')) return;
+    try{ localStorage.removeItem('excel_escape_progress'); }catch(e){}
+    this.cleared=[];
     this.start(ACT_ORDER[0]);
   },
   hasSave(){ try{ return !!this.decode(localStorage.getItem('excel_escape_save')); }catch(e){ return false; } },
