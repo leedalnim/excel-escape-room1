@@ -813,7 +813,7 @@ const Game = {
       c.className='chapter-chip'+(unlocked?'':' locked')+(cleared?' cleared':'');
       c.innerHTML='<span class="cno">'+this.esc((meta.no||'').replace('ACT ',''))+'</span>'
         +'<span class="ctit">'+this.esc(meta.title||'')+'</span>'
-        +(eTot?'<span class="cend">♠ '+endGot+'/'+eTot+'</span>':'')
+        +((eTot && unlocked)?'<span class="cend">'+endGot+'/'+eTot+'</span>':'')
         +'<span class="cmark">'+(cleared?'✓':(unlocked?'':'🔒'))+'</span>';
       if(unlocked) c.onclick=()=>this.start(a);
       wrap.appendChild(c);
