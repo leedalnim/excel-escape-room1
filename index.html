@@ -419,6 +419,35 @@
   .brk-sw{width:42px;height:30px;border-radius:5px;border:1px solid #4a4f5b;background:#23262e;
     color:#6a6f7b;font-family:var(--mono);font-size:10px;cursor:pointer;transition:.12s}
   .brk-sw.on{background:rgba(207,166,78,.2);border-color:var(--gold);color:var(--gold)}
+  /* 분전반(분전함) 패널 디자인 */
+  .breaker-panel{margin:6px auto;max-width:344px;border-radius:11px;overflow:hidden;position:relative;
+    background:linear-gradient(180deg,#3c3f45,#2a2c30);border:2px solid #5a5d63;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 28px rgba(0,0,0,.5)}
+  .breaker-panel:before,.breaker-panel:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#9296a0,#33363b);top:9px;z-index:2}
+  .breaker-panel:before{left:9px}.breaker-panel:after{right:9px}
+  .breaker-head{background:repeating-linear-gradient(-45deg,#2a2722,#2a2722 9px,#c9a227 9px,#c9a227 18px);padding:8px 0;text-align:center}
+  .breaker-head span{background:#15171b;color:#e8b84b;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;padding:3px 12px;border-radius:3px}
+  .breaker-body{padding:14px 14px 16px;background:#202227}
+  .brk-grid td{padding:0}
+  .brk-toggle{width:40px;height:36px;border-radius:4px;border:1px solid #15171b;cursor:pointer;position:relative;
+    background:linear-gradient(180deg,#4c4f55,#34363b);padding:0;transition:.12s;display:block}
+  .brk-toggle:hover{background:linear-gradient(180deg,#565a61,#3a3c42)}
+  .brk-lever{position:absolute;left:7px;right:7px;height:14px;border-radius:2px;bottom:5px;
+    background:linear-gradient(180deg,#26282d,#16181c);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transition:.14s}
+  .brk-toggle.on .brk-lever{bottom:auto;top:5px;background:linear-gradient(180deg,#e6c25a,#c79f3e);
+    box-shadow:0 0 7px rgba(207,166,78,.6)}
+  .brk-toggle:after{content:"O";position:absolute;right:3px;bottom:2px;font-size:7px;color:#5a5e68;font-family:var(--mono)}
+  .brk-toggle.on:after{content:"I";color:var(--gold)}
+  /* act4 키패드 자음 추리 다이어그램 */
+  .kp-diagram{margin-bottom:14px}
+  .kp-cap{font-size:11px;color:var(--ink-dim);margin-bottom:5px}
+  .kp-word{font-family:var(--mono);font-size:22px;letter-spacing:.45em;color:var(--gold);margin-bottom:10px}
+  .kp-pad9{display:inline-grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);
+    background:#0d0f14;border:2px solid #4a4f5b;border-radius:6px}
+  .kp-pad9 span{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;
+    color:#cdd3df;border:1px solid #2a2d38}
+  .kp-note{font-size:11px;color:var(--ink-dim);margin-top:9px;line-height:1.55}
   .sec-rooms{display:flex;gap:16px;justify-content:center;margin-bottom:8px}
   .sec-room{text-align:center}
   .sec-label{font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-bottom:7px;letter-spacing:.08em}
@@ -1202,6 +1231,15 @@ const Game = {
   buildKeypadSheet(answer,name){
     const w=document.createElement('div'); w.className='mini-game';
     const title=document.createElement('div'); title.className='mg-title'; title.textContent='🔢 '+name;
+    // act4 키패드: 밑면 글자(ㄷㅁㄱㄱ)를 3×3 숫자판 위에 그려 푸는 추리 — 시각 단서 제공
+    if(name==='키패드'){
+      const dia=document.createElement('div'); dia.className='kp-diagram';
+      dia.innerHTML='<div class="kp-cap">키패드 밑면에 적힌 글자</div>'
+        +'<div class="kp-word">ㄷ ㅁ ㄱ ㄱ</div>'
+        +'<div class="kp-pad9">'+[1,2,3,4,5,6,7,8,9].map(n=>'<span>'+n+'</span>').join('')+'</div>'
+        +'<div class="kp-note">숫자판은 3×3 배치, 칸 사이 선은 <b>#</b>자로 나뉩니다.<br>각 글자(ㄷ·ㅁ·ㄱ)를 이 선을 따라 그려 숫자를 읽어보세요. (예: ㄴ = 3)</div>';
+      w.appendChild(dia);
+    }
     const led=document.createElement('div'); led.className='kp-led red'; led.textContent='● 잠김';
     const disp=document.createElement('div'); disp.className='lock-display'; const slots=[]; let val='';
     for(let i=0;i<answer.length;i++){ const s=document.createElement('span'); s.className='lock-slot'; disp.appendChild(s); slots.push(s); }
@@ -1238,11 +1276,13 @@ const Game = {
   },
   // 분전함 (act3 E시트) — 5×5 스위치를 정답 패턴으로 맞추기 (행·열 일치 시 초록불)
   buildBreaker(){
-    const w=document.createElement('div'); w.className='mini-game';
+    const w=document.createElement('div'); w.className='breaker-panel';
+    const head=document.createElement('div'); head.className='breaker-head';
+    head.innerHTML='<span>⚡ 분전반 · DISTRIBUTION BOARD</span>';
+    const body=document.createElement('div'); body.className='breaker-body';
     const sol=[[1,1,1,0,0],[1,1,1,1,0],[1,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0]];
     const grid=Array.from({length:5},()=>[0,0,0,0,0]);
-    const title=document.createElement('div'); title.className='mg-title'; title.textContent='🔌 분전함 (5×5)';
-    const status=document.createElement('div'); status.className='mg-status'; status.textContent='스위치를 켜고 끄세요. 가로·세로 표시등이 모두 초록이면 작동!';
+    const status=document.createElement('div'); status.className='mg-status'; status.textContent='차단기를 올리고 내려, 가로·세로 표시등을 모두 초록으로 만드세요.';
     const result=document.createElement('div'); result.className='mg-result';
     const tbl=document.createElement('table'); tbl.className='brk-grid';
     const colLed=[]; const rowLed=[]; const sw=[];
@@ -1250,18 +1290,19 @@ const Game = {
       let all=true;
       for(let r=0;r<5;r++){ let rm=true; for(let c=0;c<5;c++){ if(grid[r][c]!==sol[r][c]) rm=false; } rowLed[r].className='brk-led '+(rm?'on':''); if(!rm) all=false; }
       for(let c=0;c<5;c++){ let cm=true; for(let r=0;r<5;r++){ if(grid[r][c]!==sol[r][c]) cm=false; } colLed[c].className='brk-led '+(cm?'on':''); if(!cm) all=false; }
-      for(let r=0;r<5;r++)for(let c=0;c<5;c++){ sw[r][c].className='brk-sw '+(grid[r][c]?'on':''); sw[r][c].textContent=grid[r][c]?'ON':'OFF'; }
-      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 분전함 작동! 코드 — 1405':'';
+      for(let r=0;r<5;r++)for(let c=0;c<5;c++){ sw[r][c].className='brk-toggle '+(grid[r][c]?'on':''); }
+      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 전원 복구! 분전반 코드 — 1405':'';
     };
     // header row (col leds)
     const h=document.createElement('tr'); h.appendChild(document.createElement('th'));
     for(let c=0;c<5;c++){ const th=document.createElement('th'); const l=document.createElement('span'); l.className='brk-led'; colLed.push(l); th.appendChild(l); h.appendChild(th); }
     tbl.appendChild(h);
     for(let r=0;r<5;r++){ const tr=document.createElement('tr'); const th=document.createElement('th'); const l=document.createElement('span'); l.className='brk-led'; rowLed.push(l); th.appendChild(l); tr.appendChild(th); sw[r]=[];
-      for(let c=0;c<5;c++){ const td=document.createElement('td'); const b=document.createElement('button'); b.className='brk-sw'; sw[r][c]=b;
+      for(let c=0;c<5;c++){ const td=document.createElement('td'); const b=document.createElement('button'); b.className='brk-toggle'; b.innerHTML='<span class="brk-lever"></span>'; sw[r][c]=b;
         b.onclick=((R,C)=>()=>{ grid[R][C]^=1; update(); })(r,c); td.appendChild(b); tr.appendChild(td); }
       tbl.appendChild(tr); }
-    w.appendChild(title); w.appendChild(status); w.appendChild(tbl); w.appendChild(result); update();
+    body.appendChild(status); body.appendChild(tbl); body.appendChild(result);
+    w.appendChild(head); w.appendChild(body); update();
     return w;
   },
   // 보안실 A·B (act5) — 두 방을 번갈아 누르는 교대 버튼 퍼즐
