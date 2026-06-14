@@ -470,6 +470,25 @@
   .px{aspect-ratio:1;background:#161a21;border-radius:1px}
   .px.on{background:#ffc24d;box-shadow:0 0 5px rgba(255,194,77,.75)}
   .tv-cap{text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:.1em;margin-top:9px}
+  /* act1 분전함 퓨즈 박스 */
+  .fuse-box{margin:16px auto;max-width:296px;border-radius:11px;overflow:hidden;
+    background:linear-gradient(180deg,#37363b,#26252a);border:2px solid #55525a;box-shadow:0 12px 28px rgba(0,0,0,.5)}
+  .fuse-head{background:repeating-linear-gradient(-45deg,#2a2722,#2a2722 9px,#c9a227 9px,#c9a227 18px);padding:8px 0;text-align:center}
+  .fuse-head span{background:#15171b;color:#e8b84b;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;padding:3px 12px;border-radius:3px}
+  .fuse-body{padding:16px 14px 14px;background:#201f24;text-align:center}
+  .fuse-code{font-family:var(--mono);font-size:12.5px;color:var(--gold);margin-bottom:10px;letter-spacing:.06em}
+  .fuse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 auto 12px;max-width:228px}
+  .fuse{height:56px;border-radius:6px;border:1px solid #15171b;cursor:pointer;position:relative;
+    background:linear-gradient(180deg,#ddcaa4,#bba572);color:#2a2417;font-family:var(--mono);font-weight:700;font-size:21px;
+    box-shadow:inset 0 0 0 4px rgba(0,0,0,.1);transition:.12s}
+  .fuse:before,.fuse:after{content:"";position:absolute;left:50%;width:20px;height:5px;margin-left:-10px;background:#9296a0;border-radius:1px}
+  .fuse:before{top:-3px}.fuse:after{bottom:-3px}
+  .fuse.sel{outline:3px solid var(--gold);outline-offset:1px;transform:translateY(-3px)}
+  .fuse-box.done .fuse{background:linear-gradient(180deg,#cfe3ad,#a6c879)}
+  .fuse-status{font-family:var(--mono);font-size:12px;color:var(--ink-dim);min-height:16px;line-height:1.4}
+  .fuse-box.done .fuse-status{color:var(--ok);font-weight:700}
+  .fuse-go{margin-top:11px;background:var(--accent);border:none;color:#fff;font-family:var(--mono);font-size:12px;padding:8px 18px;border-radius:7px;cursor:pointer}
+  .fuse-go:hover{background:#d8483a}
   /* act3 시계판 디자인 */
   .clock-wrap{display:flex;justify-content:center;margin:14px auto}
   .clock-face{position:relative;width:230px;height:230px;border-radius:50%;
@@ -1560,6 +1579,32 @@ const Game = {
     wrap.appendChild(cap);
     return wrap;
   },
+  // act1 분전함 퓨즈 박스 — 퓨즈 두 개를 눌러 자리 교체, 매뉴얼대로 맞추면 코드 공개
+  buildFuseBox(init, target){
+    let order=init.slice(), sel=-1;
+    const wrap=document.createElement('div'); wrap.className='fuse-box';
+    const head=document.createElement('div'); head.className='fuse-head'; head.innerHTML='<span>🔌 분전함 — 퓨즈 배치</span>';
+    const body=document.createElement('div'); body.className='fuse-body';
+    const code=document.createElement('div'); code.className='fuse-code';
+    const grid=document.createElement('div'); grid.className='fuse-grid'; const cells=[];
+    const status=document.createElement('div'); status.className='fuse-status';
+    const go=document.createElement('button'); go.className='fuse-go'; go.textContent='이 코드로 진행'; go.style.display='none';
+    const render=()=>{
+      order.forEach((d,i)=>{ cells[i].textContent=d; cells[i].className='fuse'+(sel===i?' sel':''); });
+      const cur=order.join(''); code.textContent='현재 배치 · '+cur;
+      const ok=target && cur===target;
+      wrap.classList.toggle('done',ok);
+      status.textContent=ok?('✓ 정상 배치! 코드 — '+cur):'퓨즈 두 개를 차례로 눌러 자리를 바꾸세요.';
+      go.style.display=ok?'inline-block':'none';
+      if(ok) go.onclick=()=>this.lookupKeyword(cur,false);
+    };
+    for(let i=0;i<order.length;i++){ const b=document.createElement('button'); b.className='fuse'; cells.push(b);
+      b.onclick=()=>{ if(sel<0) sel=i; else if(sel===i) sel=-1; else { const t=order[sel]; order[sel]=order[i]; order[i]=t; sel=-1; } render(); };
+      grid.appendChild(b); }
+    body.appendChild(code); body.appendChild(grid); body.appendChild(status); body.appendChild(go);
+    wrap.appendChild(head); wrap.appendChild(body); render();
+    return wrap;
+  },
   // 시트 이름으로 문서 테마 결정
   sheetTheme(name){
     name=name||'';
@@ -1709,6 +1754,16 @@ const Game = {
       }
     }
 
+    // act1 분전함 퓨즈 퍼즐 → 인터랙티브 퓨즈 박스 (직접 눌러 자리 바꾸기)
+    let fuseEl=null;
+    const fuseM=/퓨즈/.test(story) && story.match(/(?:^|\n)\s*(\d{3})\s*\n\s*(\d{3})\s*(?:\n|$)/);
+    if(fuseM){
+      const init=(fuseM[1]+fuseM[2]).split('');
+      const target=this.lockAnswer(String(text), init.length);
+      fuseEl=this.buildFuseBox(init, target);
+      story=story.replace(fuseM[0],'\n').replace(/현재 퓨즈는\s*\d+\s*인데\.*/,'').replace(/\n{3,}/g,'\n\n').trim();
+    }
+
     // 화면 픽셀 아트(■□) → TV 스크린 픽셀 그리드로 분리 렌더 (정렬 보장)
     let screenEl=null;
     const isArt=l=>/[■□]/.test(l) && /^[\s■□]+$/.test(l);
@@ -1726,6 +1781,7 @@ const Game = {
     if(letterEl){ e.appendChild(letterEl); }
     if(boardEl){ e.appendChild(boardEl); }
     if(screenEl){ e.appendChild(screenEl); }
+    if(fuseEl){ e.appendChild(fuseEl); }
 
     // 자물쇠/도어락 지문 → 그래픽 잠금장치 위젯 (명시적 'N자리' 입력 지문에만)
     const dm=/([1-9])\s*자리/.exec(story);
