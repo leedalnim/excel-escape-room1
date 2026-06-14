@@ -272,6 +272,8 @@
   .map-chip:hover{border-color:var(--blue);color:var(--blue)}
   .map-chip.here{background:var(--blue);color:#0b0c10;border-color:var(--blue);font-weight:700}
   .map-chip.here:after{content:" · 지금";font-size:10px;font-family:var(--mono)}
+  .map-chip.locked{background:transparent;border-style:dashed;border-color:#3a3f4b;color:#555b68;cursor:default;opacity:.7}
+  .map-chip.locked:hover{border-color:#3a3f4b;color:#555b68}
   /* 탐색 지도 사이드 요약 + 팝업 트리거 */
   .map-summary{font-size:13px;color:var(--ink-dim);margin-bottom:10px;line-height:1.6}
   .map-summary .here-now{color:var(--blue);font-weight:700}
@@ -866,6 +868,20 @@ const ACT_META = {
   act1:{no:'ACT 1',title:'편지'}, act2:{no:'ACT 2',title:'선택'},
   act3:{no:'ACT 3',title:'초대'}, act4:{no:'ACT 4',title:'탈출'}, act5:{no:'ACT 5',title:'자백'}
 };
+// 손으로 짠 전체 방 지도 (미리 그려두고 방문 시 해금). 없는 액트는 기존 방식(이동 기록)으로 폴백.
+const ACT_ROOMS = {
+  act1:[
+    {n:'정문', p:null,   k:['정문'],                 go:'정문'},
+    {n:'현관', p:'정문', k:['현관','5827'],          go:'현관'},
+    {n:'지하실', p:'현관', k:['지하실'],              go:'지하실'},
+    {n:'거실', p:'현관', k:['거실'],                  go:'거실'},
+    {n:'부엌', p:'현관', k:['부엌'],                  go:'부엌'},
+    {n:'안방', p:'현관', k:['안방','12531'],          go:'12531'},
+    {n:'2층', p:'현관', k:['2층'],                    go:'2층'},
+    {n:'서재', p:'2층', k:['서재','291'],             go:'291'},
+    {n:'작은방', p:'2층', k:['작은방','작은방 안','169'], go:'작은방 안'}
+  ]
+};
 
 const Game = {
   act:null, data:null, level:0, history:[], inv:{}, endings:{}, notes:'', places:[], parents:{}, here:'', lastKw:'', adj:{}, hubSet:null, cleared:[], sheetsSeen:[], expanded:null, talkState:null, viewpoint:'belkin', combineMode:false, combineSel:null, viewItem:null, situations:null,
@@ -873,6 +889,7 @@ const Game = {
   start(key, resume){
     this.data = DATA[key]; this.act = key;
     this.level = 0; this.history = []; this.inv = {}; this.endings = {}; this.places=[]; this.parents={}; this.here=''; this.lastKw=''; this.sheetsSeen=[]; this.expanded=new Set(); this.talkState=null; this.viewpoint='belkin'; this.situations={};
+    this.seenKw=new Set((resume&&resume.seen)||[]);
     this.viewItem=null; this.combineMode=false; this.combineSel=null; this.clearItemDetail();
     this.buildAdj();
     document.getElementById('start').style.display='none';
@@ -1051,6 +1068,7 @@ const Game = {
     // save undo snapshot BEFORE applying side-effects
     this.history.push({level:this.level, inv:{...this.inv}, endings:{...this.endings}, kw});
     this.lastKw=kw;
+    if(this.seenKw) this.seenKw.add(kw);   // 전체 지도 해금 추적
     this.applyPassage(silent?null:kw, passage);
     this.autoSave();
   },
@@ -1119,6 +1137,37 @@ const Game = {
     const real=choices.filter(c=>!/^ctrl\+z$/i.test(c)); // ? counts as a hidden exit
     return real.length>0;                              // leads somewhere = a hub
   },
+  // 전체 방 지도(미리 그려둠, 방문 시 해금) — 손으로 짠 ACT_ROOMS 기반
+  renderRoomMap(rooms, g, summary, btn){
+    const seen=this.seenKw||new Set();
+    const isOpen=r=>r.k.some(k=>seen.has(k));
+    const hereKw=this.here||this.lastKw;
+    const isHere=r=>r.k.includes(hereKw);
+    const openCt=rooms.filter(isOpen).length;
+    if(btn) btn.style.display='block';
+    const ct=document.getElementById('placeCt'); if(ct) ct.textContent=openCt;
+    const hereRoom=rooms.find(isHere);
+    const hereName=hereRoom?hereRoom.n:'-';
+    if(summary) summary.innerHTML='지금 위치 · <span class="here-now">'+this.esc(hereName)+'</span><br>해금 '+openCt+' / '+rooms.length+'곳';
+    const hereEl=document.getElementById('mapHere'); if(hereEl) hereEl.textContent='지금 · '+this.esc(hereName);
+    const kidsOf=name=>rooms.filter(r=>r.p===name);
+    const roots=rooms.filter(r=>!r.p);
+    g.innerHTML=''; const tree=document.createElement('div'); tree.className='map-tree hmap';
+    const render=r=>{
+      const node=document.createElement('div'); node.className='hnode';
+      const open=isOpen(r), here=isHere(r);
+      const chip=document.createElement('span'); chip.className='map-chip'+(open?'':' locked')+(here?' here':'');
+      if(open){ chip.textContent=r.n; chip.onclick=()=>{ if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); } this.lookupKeyword(r.go,false); }; }
+      else { chip.textContent='🔒'; chip.title='아직 해금되지 않은 장소'; }
+      node.appendChild(chip);
+      const kids=kidsOf(r.n);
+      if(kids.length){ const kbox=document.createElement('div'); kbox.className='hkids';
+        kids.forEach(c=>kbox.appendChild(render(c))); node.appendChild(kbox); }
+      return node;
+    };
+    roots.forEach(r=>tree.appendChild(render(r)));
+    g.appendChild(tree);
+  },
   addPlace(kw){ if(kw && !this.places.includes(kw)) this.places.push(kw); },
   expandPath(kw){ if(!this.expanded) this.expanded=new Set(); let p=kw, guard=new Set();
     while(p && !guard.has(p)){ guard.add(p); this.expanded.add(p); p=this.parents[p]; } },
@@ -1126,6 +1175,7 @@ const Game = {
     const g=document.getElementById('mapBody');
     const summary=document.getElementById('mapSummary');
     const btn=document.getElementById('mapOpenBtn');
+    if(ACT_ROOMS[this.act]){ this.renderRoomMap(ACT_ROOMS[this.act], g, summary, btn); return; }
     document.getElementById('placeCt').textContent=this.places.length;
     if(!this.places.length){
       if(g) g.innerHTML='';
@@ -1699,7 +1749,8 @@ const Game = {
   snapshot(){
     const s={a:this.act, l:this.level, k:this.lastKw||'시작',
       i:Object.keys(this.inv), e:Object.keys(this.endings),
-      c:[...this.cleared], h:[...this.sheetsSeen], v:this.viewpoint, st:this.situations||{}};
+      c:[...this.cleared], h:[...this.sheetsSeen], v:this.viewpoint, st:this.situations||{},
+      sk:this.seenKw?[...this.seenKw]:[]};
     if(this.places.length){
       s.p=[...this.places];
       s.q=this.places.map(p=>{ const par=this.parents[p]; return par?this.places.indexOf(par):-1; });
@@ -1722,7 +1773,7 @@ const Game = {
       return {act:o.a||o.act, level:o.l||o.level||0, lastKw:o.k||o.lastKw||'시작',
         inv:o.i||o.inv||[], endings:o.e||o.endings||[], cleared:o.c||o.cleared||[],
         sheetsSeen:o.h||o.sheetsSeen||[], notes:(o.n!==undefined?o.n:(o.notes||'')),
-        places:places, parents:parents, here:here, viewpoint:o.v||o.viewpoint||'belkin', situations:o.st||{}};
+        places:places, parents:parents, here:here, viewpoint:o.v||o.viewpoint||'belkin', situations:o.st||{}, seen:o.sk||[]};
     }catch(e){ return null; }
   },
   openSave(){
