@@ -115,12 +115,14 @@
   #game.live{display:grid;grid-template-columns:1fr 340px;}
   .stage{display:flex;flex-direction:column;height:100vh;height:100dvh;min-width:0;
     background:linear-gradient(180deg,#1a1d25,#14161d);}
-  .topbar{display:flex;align-items:center;gap:14px;padding:14px 26px;border-bottom:1px solid var(--line);
+  .topbar{display:flex;flex-direction:column;gap:6px;padding:14px 26px;border-bottom:1px solid var(--line);
     background:rgba(13,14,19,.7);backdrop-filter:blur(4px);
     padding-top:calc(14px + env(safe-area-inset-top,0px));flex:none;position:relative;z-index:10}
+  .topbar-main{display:flex;align-items:center;gap:14px;width:100%}
+  .tb-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
   .topbar .badge{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--accent);text-transform:uppercase}
   .topbar .title{font-family:var(--serif);font-weight:700;font-size:18px}
-  .topbar .step{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .topbar .step{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
   .topbar button{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--ink-dim);
     background:none;border:1px solid var(--line);padding:6px 12px;border-radius:3px;cursor:pointer;transition:.2s}
   .topbar button:hover{color:var(--ink);border-color:var(--ink-dim)}
@@ -671,7 +673,8 @@
     .aside-close{display:block;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
       font-family:var(--mono);font-size:12px;padding:10px;cursor:pointer;border-radius:0}
     .scroll,.composer{padding-left:5%;padding-right:5%}
-    .topbar{gap:8px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));flex-wrap:wrap}
+    .topbar{gap:6px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+    .topbar-main{flex-wrap:wrap;gap:8px}
     .topbar .title{font-size:16px}
     .topbar .step{font-size:10px}
   }
@@ -703,12 +706,16 @@
 <section id="game">
   <div class="stage">
     <div class="topbar">
-      <span class="badge" id="actBadge">ACT 1</span>
-      <span class="title" id="actTitle">편지</span>
+      <div class="topbar-main">
+        <span class="badge" id="actBadge">ACT 1</span>
+        <span class="title" id="actTitle">편지</span>
+        <span class="tb-actions">
+          <button onclick="Game.undo()">↩ 돌아가기</button>
+          <button onclick="Game.home()">처음으로</button>
+          <button class="aside-toggle" onclick="Game.toggleAside()">🎒 가방</button>
+        </span>
+      </div>
       <span class="step" id="stepInfo">단계 1</span>
-      <button onclick="Game.undo()">↩ 돌아가기</button>
-      <button onclick="Game.home()">처음으로</button>
-      <button class="aside-toggle" onclick="Game.toggleAside()">🎒 가방</button>
     </div>
     <div class="progress" title="진행률"><div class="progress-fill" id="progressFill"></div></div>
     <div class="scroll" id="scroll"></div>
@@ -2323,7 +2330,7 @@ function relabelData(o){
 }
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v39';
+var APP_VERSION='v40';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
