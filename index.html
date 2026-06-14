@@ -467,6 +467,34 @@
   .px{aspect-ratio:1;background:#161a21;border-radius:1px}
   .px.on{background:#ffc24d;box-shadow:0 0 5px rgba(255,194,77,.75)}
   .tv-cap{text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:.1em;margin-top:9px}
+  /* act3 시계판 디자인 */
+  .clock-wrap{display:flex;justify-content:center;margin:14px auto}
+  .clock-face{position:relative;width:230px;height:230px;border-radius:50%;
+    background:radial-gradient(circle at 50% 38%,#f7f3e8,#e3dcc8 70%,#cdc4ab);
+    border:9px solid #2a2722;box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 0 22px rgba(120,100,60,.25)}
+  .clock-tick{position:absolute;left:50%;top:6px;width:2px;height:11px;margin-left:-1px;background:#7a6e52;transform-origin:50% 109px}
+  .clock-tick.big{width:3px;height:16px;margin-left:-1.5px;background:#2a2722}
+  .clock-hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;background:#2a2722;border-radius:2px}
+  .clock-hand.hour{width:5px;height:58px;margin-left:-2.5px;transform:rotate(38deg)}
+  .clock-hand.min{width:3px;height:84px;margin-left:-1.5px;transform:rotate(190deg);background:#5b4a2c}
+  .clock-pin{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#2a2722;z-index:3}
+  .clock-center{position:absolute;left:0;right:0;top:32%;text-align:center;font-family:var(--mono);color:#3a2f18;z-index:2;pointer-events:none}
+  .clock-center b{display:block;font-size:14px;background:#fff59a;padding:1px 6px;border-radius:2px;display:inline-block}
+  .clock-center span{display:block;font-size:11px;letter-spacing:.18em;margin-top:2px;color:#6b5a3a}
+  .clock-mark{position:absolute;font-family:var(--mono);font-weight:700;font-size:13px;color:#7a2f2f}
+  .clock-mark.m0{right:34px;bottom:74px}.clock-mark.m1{right:30px;bottom:50px}
+  /* act5 논리퍼즐 풀이표 */
+  .logic-grid{margin:14px auto;max-width:340px;text-align:center}
+  .lg-title{font-family:var(--mono);font-size:12.5px;color:var(--gold);margin-bottom:10px;letter-spacing:.04em}
+  .lg-tbl{border-collapse:collapse;margin:0 auto;width:100%}
+  .lg-tbl th{font-size:10.5px;color:var(--ink-dim);font-weight:600;padding:3px;border:1px solid #3a3f4b;line-height:1.2}
+  .lg-tbl th:first-child{white-space:nowrap}
+  .lg-tbl td{border:1px solid #3a3f4b;padding:2px}
+  .lg-sel{width:100%;min-width:48px;background:#0d0f14;color:var(--gold);border:none;border-radius:3px;
+    font-family:var(--mono);font-size:11px;padding:5px 2px;outline:none;cursor:pointer}
+  .lg-reset{margin-top:10px;background:#2c313e;border:1px solid #3f4452;color:var(--ink-dim);
+    font-family:var(--mono);font-size:11px;padding:7px 14px;border-radius:6px;cursor:pointer}
+  .lg-reset:hover{background:#363c4b;color:var(--ink)}
   /* ===== letterpaper ===== */
   .letter-paper{margin:18px 0 6px;background-color:#f2e9d0;color:#352b16;
     border:1px solid #cbbd97;border-radius:3px;padding:30px 34px;position:relative;
@@ -1194,6 +1222,8 @@ const Game = {
     if(this.act==='act5' && code==='58' && typeof CMY_URI!=='undefined'){
       html+='<figure class="sheet-figure"><img src="'+CMY_URI+'" alt="CMY 색 혼합도"><figcaption>색의 혼합 — 단서</figcaption></figure>';
     }
+    // act3 시계(B시트)는 거대한 빈 표 대신 시계판 위젯으로 대체
+    if(this.act==='act3' && code==='96') html='';
     document.getElementById('sheetBody').innerHTML=html;
     const widget=this.sheetWidget(this.act,code);
     if(widget) document.getElementById('sheetBody').appendChild(widget);
@@ -1208,8 +1238,59 @@ const Game = {
     if(key==='act4/126') return this.buildKeypadSheet('6577','키패드');
     if(key==='act4/39')  return this.buildController();
     if(key==='act3/82')  return this.buildBreaker();
+    if(key==='act3/96')  return this.buildClock();
+    if(key==='act5/1')   return this.buildLogicGrid();
     if(key==='act5/93' || key==='act5/99') return this.buildSecurity();
     return null;
+  },
+  // act3 시계(B시트) — 날짜·L-R·E=O가 새겨진 시계판 (몰입 디자인)
+  buildClock(){
+    const s=(this.data.sheets&&this.data.sheets['96'])||{};
+    const cells=[...String(s.html||'').matchAll(/<td[^>]*>([^<]+)<\/td>/g)].map(m=>m[1].trim()).filter(Boolean);
+    const dateRaw=cells[0]||'2023.07.31 / MON';
+    const marks=cells.slice(1);
+    const dparts=dateRaw.split('/').map(x=>x.trim());
+    const wrap=document.createElement('div'); wrap.className='clock-wrap';
+    const face=document.createElement('div'); face.className='clock-face';
+    for(let i=0;i<12;i++){ const t=document.createElement('span'); t.className='clock-tick'+(i%3===0?' big':'');
+      t.style.transform='rotate('+(i*30)+'deg)'; face.appendChild(t); }
+    const hh=document.createElement('span'); hh.className='clock-hand hour';
+    const mh=document.createElement('span'); mh.className='clock-hand min';
+    const pin=document.createElement('span'); pin.className='clock-pin';
+    const c=document.createElement('div'); c.className='clock-center';
+    c.innerHTML='<b>'+this.esc(dparts[0]||'')+'</b>'+(dparts[1]?'<span>'+this.esc(dparts[1])+'</span>':'');
+    marks.forEach((mk,i)=>{ const e=document.createElement('div'); e.className='clock-mark m'+i; e.textContent=mk; face.appendChild(e); });
+    face.appendChild(hh); face.appendChild(mh); face.appendChild(pin); face.appendChild(c);
+    wrap.appendChild(face);
+    return wrap;
+  },
+  // act5 논리퍼즐(A시트) — 6항목 × 5부지 풀이표 (직접 채우는 스크래치패드)
+  buildLogicGrid(){
+    const cats=[
+      ['색깔','빨강','노랑','주황','파랑','초록'],
+      ['업태','화학','반도체','금속','의류','자동차'],
+      ['국적','미국','한국','프랑스','영국','독일'],
+      ['CEO','리암','낸디','루카','잭','필립'],
+      ['면적','250','300','150','100','200'],
+      ['설립년월','1993','2002','1997','2022','2010']
+    ];
+    const w=document.createElement('div'); w.className='logic-grid';
+    const title=document.createElement('div'); title.className='lg-title'; title.textContent='🧮 풀이표 — 부지별로 채워보세요';
+    const tbl=document.createElement('table'); tbl.className='lg-tbl';
+    const hr=document.createElement('tr'); hr.innerHTML='<th></th>'+[1,2,3,4,5].map(n=>'<th>'+n+'번<br>부지</th>').join('');
+    tbl.appendChild(hr);
+    const sels=[];
+    cats.forEach(cat=>{ const tr=document.createElement('tr');
+      const th=document.createElement('th'); th.textContent=cat[0]; tr.appendChild(th);
+      for(let p=0;p<5;p++){ const td=document.createElement('td');
+        const sel=document.createElement('select'); sel.className='lg-sel';
+        sel.innerHTML='<option value="">·</option>'+cat.slice(1).map(o=>'<option>'+o+'</option>').join('');
+        sels.push(sel); td.appendChild(sel); tr.appendChild(td); }
+      tbl.appendChild(tr); });
+    const reset=document.createElement('button'); reset.className='lg-reset'; reset.textContent='↺ 풀이표 비우기';
+    reset.onclick=()=>sels.forEach(s=>s.value='');
+    w.appendChild(title); w.appendChild(tbl); w.appendChild(reset);
+    return w;
   },
   // ★ UP & DOWN 숫자 맞추기 게임 (act4 F시트)
   buildUpDown(){
