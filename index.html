@@ -1265,23 +1265,25 @@ const Game = {
     if(!this.sheetsSeen.includes(code)){ this.sheetsSeen.push(code); this.renderSheets(); this.autoSave(); }
     document.getElementById('sheetTitle').textContent='시트 '+(s.alpha?s.alpha+' · ':'')+s.name;
     document.getElementById('sheetCode').textContent='시트 코드 · '+code;
+    const widget=this.sheetWidget(this.act,code);
     let html=s.html||'<p>자료를 불러올 수 없습니다.</p>';
+    // 인터랙티브 위젯이 있는 시트는 엑셀 빈칸 격자표가 흉하므로 숨기고 위젯만 노출
+    if(widget){
+      html = (this.act==='act3' && code==='82')
+        ? '<div class="brk-info"><b>[분전함 작동법]</b><br>'
+          +'· 5×5, 25개 차단기 중 총 <b>15개</b>를 ON으로.<br>'
+          +'· 각 가로·세로줄 끝 표시등이 <b>모두 초록</b>이면 작동.<br>'
+          +'· 줄의 ON 개수가 딱 맞으면 그 줄 끝에 초록불, 하나라도 틀리면 빨간불.<br>'
+          +'· 가로줄끼리·세로줄끼리 ON 개수는 서로 겹치지 않습니다.</div>'
+        : '';
+    }
+    // act3 시계(B시트)는 위젯 없이 빈 표만 → 시계판으로 대체
+    if(this.act==='act3' && code==='96') html='';
     // act5 색 혼합 퍼즐 시트(F·서류)엔 CMY 색상 단서 이미지를 함께 노출
     if(this.act==='act5' && code==='58' && typeof CMY_URI!=='undefined'){
       html+='<figure class="sheet-figure"><img src="'+CMY_URI+'" alt="CMY 색 혼합도"><figcaption>색의 혼합 — 단서</figcaption></figure>';
     }
-    // act3 시계(B시트)는 거대한 빈 표 대신 시계판 위젯으로 대체
-    if(this.act==='act3' && code==='96') html='';
-    // act3 분전함은 1089칸짜리 정적 표 대신 작동법 + 인터랙티브 분전함 위젯으로 대체
-    if(this.act==='act3' && code==='82'){
-      html='<div class="brk-info"><b>[분전함 작동법]</b><br>'
-        +'· 5×5, 25개 차단기 중 총 <b>15개</b>를 ON으로.<br>'
-        +'· 각 가로·세로줄 끝 표시등이 <b>모두 초록</b>이면 작동.<br>'
-        +'· 줄의 ON 개수가 딱 맞으면 그 줄 끝에 초록불, 하나라도 틀리면 빨간불.<br>'
-        +'· 가로줄끼리·세로줄끼리 ON 개수는 서로 겹치지 않습니다.</div>';
-    }
     document.getElementById('sheetBody').innerHTML=html;
-    const widget=this.sheetWidget(this.act,code);
     if(widget) document.getElementById('sheetBody').appendChild(widget);
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
