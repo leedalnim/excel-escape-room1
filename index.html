@@ -429,6 +429,9 @@
   .breaker-head{background:repeating-linear-gradient(-45deg,#2a2722,#2a2722 9px,#c9a227 9px,#c9a227 18px);padding:8px 0;text-align:center}
   .breaker-head span{background:#15171b;color:#e8b84b;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;padding:3px 12px;border-radius:3px}
   .breaker-body{padding:14px 14px 16px;background:#202227}
+  .brk-info{max-width:340px;margin:6px auto 0;font-size:12.5px;line-height:1.7;color:var(--ink-dim);text-align:left;
+    background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .brk-info b{color:var(--ink)}
   .brk-grid td{padding:0}
   .brk-toggle{width:40px;height:36px;border-radius:4px;border:1px solid #15171b;cursor:pointer;position:relative;
     background:linear-gradient(180deg,#4c4f55,#34363b);padding:0;transition:.12s;display:block}
@@ -1224,6 +1227,14 @@ const Game = {
     }
     // act3 시계(B시트)는 거대한 빈 표 대신 시계판 위젯으로 대체
     if(this.act==='act3' && code==='96') html='';
+    // act3 분전함은 1089칸짜리 정적 표 대신 작동법 + 인터랙티브 분전함 위젯으로 대체
+    if(this.act==='act3' && code==='82'){
+      html='<div class="brk-info"><b>[분전함 작동법]</b><br>'
+        +'· 5×5, 25개 차단기 중 총 <b>15개</b>를 ON으로.<br>'
+        +'· 각 가로·세로줄 끝 표시등이 <b>모두 초록</b>이면 작동.<br>'
+        +'· 줄의 ON 개수가 딱 맞으면 그 줄 끝에 초록불, 하나라도 틀리면 빨간불.<br>'
+        +'· 가로줄끼리·세로줄끼리 ON 개수는 서로 겹치지 않습니다.</div>';
+    }
     document.getElementById('sheetBody').innerHTML=html;
     const widget=this.sheetWidget(this.act,code);
     if(widget) document.getElementById('sheetBody').appendChild(widget);
@@ -1368,7 +1379,7 @@ const Game = {
   buildBreaker(){
     const w=document.createElement('div'); w.className='breaker-panel';
     const head=document.createElement('div'); head.className='breaker-head';
-    head.innerHTML='<span>⚡ 분전반 · DISTRIBUTION BOARD</span>';
+    head.innerHTML='<span>⚡ 분전함 · BREAKER PANEL</span>';
     const body=document.createElement('div'); body.className='breaker-body';
     const sol=[[1,1,1,0,0],[1,1,1,1,0],[1,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0]];
     const grid=Array.from({length:5},()=>[0,0,0,0,0]);
@@ -1381,7 +1392,7 @@ const Game = {
       for(let r=0;r<5;r++){ let rm=true; for(let c=0;c<5;c++){ if(grid[r][c]!==sol[r][c]) rm=false; } rowLed[r].className='brk-led '+(rm?'on':''); if(!rm) all=false; }
       for(let c=0;c<5;c++){ let cm=true; for(let r=0;r<5;r++){ if(grid[r][c]!==sol[r][c]) cm=false; } colLed[c].className='brk-led '+(cm?'on':''); if(!cm) all=false; }
       for(let r=0;r<5;r++)for(let c=0;c<5;c++){ sw[r][c].className='brk-toggle '+(grid[r][c]?'on':''); }
-      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 전원 복구! 분전반 코드 — 1405':'';
+      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 전원 복구! 분전함 코드 — 1405':'';
     };
     // header row (col leds)
     const h=document.createElement('tr'); h.appendChild(document.createElement('th'));
