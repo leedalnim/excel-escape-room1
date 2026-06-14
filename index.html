@@ -470,6 +470,10 @@
   .px{aspect-ratio:1;background:#161a21;border-radius:1px}
   .px.on{background:#ffc24d;box-shadow:0 0 5px rgba(255,194,77,.75)}
   .tv-cap{text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:.1em;margin-top:9px}
+  /* 암호 타일(낙서 등 자모·기호 암호) — 또렷한 큰 글씨 */
+  .cipher-tile{margin:16px auto;max-width:max-content;padding:16px 30px;border-radius:8px;
+    background:#f2e9d0;color:#352b16;font-family:var(--mono);font-size:34px;letter-spacing:.34em;font-weight:700;text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,.45)}
   /* act1 분전함 퓨즈 박스 */
   .fuse-box{margin:16px auto;max-width:296px;border-radius:11px;overflow:hidden;
     background:linear-gradient(180deg,#37363b,#26252a);border:2px solid #55525a;box-shadow:0 12px 28px rgba(0,0,0,.5)}
@@ -841,6 +845,7 @@ const Game = {
   start(key, resume){
     this.data = DATA[key]; this.act = key;
     this.level = 0; this.history = []; this.inv = {}; this.endings = {}; this.places=[]; this.parents={}; this.here=''; this.lastKw=''; this.sheetsSeen=[]; this.expanded=new Set(); this.talkState=null; this.viewpoint='belkin'; this.situations={};
+    this.viewItem=null; this.combineMode=false; this.combineSel=null; this.clearItemDetail();
     this.buildAdj();
     document.getElementById('start').style.display='none';
     document.getElementById('game').classList.add('live');
@@ -1575,7 +1580,7 @@ const Game = {
     rows.forEach(r=>{ for(let i=0;i<cols;i++){ const ch=r[i]||'■';
       const c=document.createElement('span'); c.className='px'+(ch==='□'?' on':''); grid.appendChild(c); } });
     wrap.appendChild(grid);
-    const cap=document.createElement('div'); cap.className='tv-cap'; cap.textContent='📺 화면 — 켜진 픽셀이 단서';
+    const cap=document.createElement('div'); cap.className='tv-cap'; cap.textContent='📺 화면';
     wrap.appendChild(cap);
     return wrap;
   },
@@ -1764,6 +1769,16 @@ const Game = {
       story=story.replace(fuseM[0],'\n').replace(/현재 퓨즈는\s*\d+\s*인데\.*/,'').replace(/\n{3,}/g,'\n\n').trim();
     }
 
+    // 암호 전용 지문(자모·박스문자만) → 크고 또렷한 암호 타일 (편지와 겹쳐보기 가독성)
+    let cipherEl=null;
+    if(!letterEl){
+      const cl=story.trim().replace(/^["“”']+|["“”']+$/g,'');
+      if(cl.length>=2 && cl.length<=16 && /[ㄱ-ㅎㅏ-ㅣ┘└┐┌│─]/.test(cl) && !/[가-힣A-Za-z0-9]/.test(cl) && !/\n/.test(cl)){
+        cipherEl=document.createElement('div'); cipherEl.className='cipher-tile'; cipherEl.textContent=cl;
+        story='';
+      }
+    }
+
     // 화면 픽셀 아트(■□) → TV 스크린 픽셀 그리드로 분리 렌더 (정렬 보장)
     let screenEl=null;
     const isArt=l=>/[■□]/.test(l) && /^[\s■□]+$/.test(l);
@@ -1781,6 +1796,7 @@ const Game = {
     if(letterEl){ e.appendChild(letterEl); }
     if(boardEl){ e.appendChild(boardEl); }
     if(screenEl){ e.appendChild(screenEl); }
+    if(cipherEl){ e.appendChild(cipherEl); }
     if(fuseEl){ e.appendChild(fuseEl); }
 
     // 자물쇠/도어락 지문 → 그래픽 잠금장치 위젯 (명시적 'N자리' 입력 지문에만)
@@ -1973,11 +1989,17 @@ const Game = {
   },
   // 아이템 사용 (코드를 키워드로 입력 = 사용)
   useSelectedItem(){ const c=this.viewItem; if(!c) return; if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); a.classList.remove('open'); if(b)b.classList.remove('open'); } this.lookupKeyword(c,false); },
+  // 아이템 상세 패널 비우기 (선택 해제 + 입력칸·버튼 초기화) — Act 전환 시 잔재 제거
+  clearItemDetail(){
+    this.viewItem=null;
+    const out=document.getElementById('detailOut'); if(out){ out.className='detail-out'; out.textContent=''; }
+    const di=document.getElementById('detailInput'); if(di) di.value='';
+    const acts=document.getElementById('itemActions'); if(acts) acts.style.display='none';
+    const cb=document.getElementById('combineBar'); if(cb) cb.style.display='none';
+  },
   // 아이템 버리기 (수동 삭제)
   dropSelectedItem(){ const c=this.viewItem; if(!c||!this.inv[c]) return; const nm=this.inv[c].name||c;
-    delete this.inv[c]; this.viewItem=null;
-    document.getElementById('detailInput').value=''; document.getElementById('detailOut').textContent='';
-    const acts=document.getElementById('itemActions'); if(acts) acts.style.display='none';
+    delete this.inv[c]; this.clearItemDetail();
     this.renderInv(); this.autoSave(); this.toast('버림 — '+nm); },
   // 조합 모드
   toggleCombine(){ this.combineMode=!this.combineMode; this.combineSel=[];
