@@ -653,6 +653,11 @@
   .modal button{margin-top:22px;background:var(--accent);border:none;color:#fff;font-family:var(--mono);
     font-size:12px;letter-spacing:.1em;padding:11px 22px;border-radius:3px;cursor:pointer}
 
+  .aside-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .aside-actions button{flex:1 1 auto;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    color:var(--ink-dim);background:none;border:1px solid var(--line);padding:9px 10px;border-radius:3px;
+    cursor:pointer;transition:.2s;white-space:nowrap}
+  .aside-actions button:hover{color:var(--ink);border-color:var(--ink-dim)}
   .aside-toggle{display:none}
   .aside-close{display:none}
   .aside-backdrop{display:none;position:fixed;inset:0;background:rgba(5,6,9,.6);z-index:29}
@@ -701,11 +706,8 @@
       <span class="badge" id="actBadge">ACT 1</span>
       <span class="title" id="actTitle">편지</span>
       <span class="step" id="stepInfo">단계 1</span>
-      <button onclick="Game.openSave()">💾 저장</button>
       <button onclick="Game.undo()">↩ 돌아가기</button>
-      <button onclick="Game.resetAct()">↻ 이 화 다시</button>
       <button onclick="Game.home()">처음으로</button>
-      <button class="ez-toggle" id="ezToggle" onclick="Game.toggleEasy()">✨ 쉬운입력 ON</button>
       <button class="aside-toggle" onclick="Game.toggleAside()">🎒 가방</button>
     </div>
     <div class="progress" title="진행률"><div class="progress-fill" id="progressFill"></div></div>
@@ -723,6 +725,11 @@
   <div class="aside-backdrop" id="asideBackdrop" onclick="Game.toggleAside()"></div>
   <aside class="aside" id="aside">
     <button class="aside-close" onclick="Game.toggleAside()">✕ 닫기</button>
+    <div class="aside-actions">
+      <button onclick="Game.openSave()">💾 저장</button>
+      <button onclick="Game.resetAct()">↻ 이 화 다시</button>
+      <button class="ez-toggle" id="ezToggle" onclick="Game.toggleEasy()">✨ 쉬운입력 ON</button>
+    </div>
     <div class="sect" id="placeSect">
       <h4>탐색 지도 <span class="ct" id="placeCt">0</span></h4>
       <div class="map-summary" id="mapSummary"><span class="inv-empty">아직 둘러본 곳이 없습니다</span></div>
