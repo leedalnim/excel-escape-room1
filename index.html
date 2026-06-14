@@ -146,6 +146,9 @@
   .choices .chip{font-family:var(--body);font-size:14px;color:var(--ink);background:var(--panel2);
     border:1px solid var(--line);padding:8px 16px;border-radius:30px;cursor:pointer;transition:.22s}
   .choices .chip:hover{background:var(--accent-dim);border-color:var(--accent);transform:translateY(-2px)}
+  .choices .chip.action-chip{color:#17140c;background:var(--gold);border-color:var(--gold);font-weight:700;
+    box-shadow:0 3px 10px rgba(207,166,78,.3)}
+  .choices .chip.action-chip:hover{background:#e6c25a;border-color:#e6c25a;transform:translateY(-2px);box-shadow:0 6px 16px rgba(207,166,78,.45)}
   .choices .chip.hidden{color:var(--gold);border-color:var(--gold);border-style:dashed;cursor:pointer;font-weight:700}
   .choices .chip.hidden:hover{background:rgba(207,166,78,.12);transform:translateY(-2px)}
   /* 힌트 칩 — 차분한 정보 스타일 / 정답 칩 — 점선 경고 스타일 (일반 선택지와 구분) */
@@ -1858,6 +1861,7 @@ const Game = {
         else if(isDeathEnding){ b.className='chip retry-chip'; b.textContent='↩ 다시 시도하기'; b.onclick=()=>this.lookupKeyword(ch,false); }
         else if(/^힌트/.test(ch)){ b.className='chip hint-chip'; b.textContent='💡 '+ch; b.onclick=()=>this.lookupKeyword(ch,false); }
         else if(/^정답/.test(ch)){ b.className='chip answer-chip'; b.textContent='🔑 '+ch+' 보기'; b.onclick=()=>this.lookupKeyword(ch,false); }
+        else if(/기$/.test(ch)){ b.className='chip action-chip'; b.textContent='▸ '+ch; b.onclick=()=>this.lookupKeyword(ch,false); }
         else { b.className='chip'; b.textContent=ch; b.onclick=()=>this.lookupKeyword(ch,false); }
         c.appendChild(b);
       });
