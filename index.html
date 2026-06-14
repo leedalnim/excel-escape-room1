@@ -1688,7 +1688,13 @@ const Game = {
   },
 
   undo(){
-    if(this.history.length<=1){ return; }
+    if(this.history.length<=1){
+      // 이어하기 직후 등 되돌릴 기록이 없을 때: 현재 위치(방)로 복귀시켜 갇히지 않게
+      const back=this.here;
+      if(back && back!==this.lastKw && this.canResolve(back)){ this.lookupKeyword(back,false); }
+      else { this.toast('더 돌아갈 곳이 없습니다 — 아래에 키워드를 입력하세요'); this.focusInput(); }
+      return;
+    }
     this.history.pop(); // current
     const prev=this.history[this.history.length-1];
     this.level=prev.level; // roll back story step only; inventory & endings persist
