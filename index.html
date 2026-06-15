@@ -363,16 +363,17 @@
   /* 시트 도구(힌트·돌려보기) */
   .sheet-tools{display:flex;flex-direction:column;gap:8px;align-items:stretch;margin-top:4px}
   .sheet-hint{background:#fff7e0;color:#5b4a2c;border:1px solid #e6d3a3;border-radius:5px;padding:8px 11px;font-size:13px;line-height:1.55;text-align:left}
-  .sheet-rot-btn{align-self:center;background:var(--panel2);border:1px solid var(--blue);color:#bcd8ef;
-    font-family:var(--mono);font-size:12px;padding:7px 16px;border-radius:4px;cursor:pointer}
-  .sheet-rot-btn:hover{background:var(--blue);color:#0b0c10}
+  .sheet-rot-btn{align-self:center;background:var(--gold);border:none;color:#17140c;font-weight:700;
+    font-family:var(--mono);font-size:12px;padding:8px 18px;border-radius:4px;cursor:pointer}
+  .sheet-rot-btn:hover{background:#e6c25a}
   /* 초대장: 색 픽셀 그림(단서) + 텍스트 카드 */
-  .invite-art{display:grid;grid-auto-rows:8px;gap:0;width:max-content;max-width:100%;margin:4px auto 16px;
-    padding:10px;background:#fff;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2);overflow:auto}
-  .invite-art span{display:block;width:8px;height:8px}
-  .invite-text{color:#3a2c14;font-size:14px;line-height:1.7;text-align:center;padding:0 4px}
+  .invite-art{display:grid;grid-auto-rows:11px;gap:0;width:max-content;max-width:100%;margin:4px auto 14px;
+    padding:12px;background:#fff;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2);overflow:auto}
+  .invite-art span{display:block;width:11px;height:11px}
+  .invite-text{background:#f6efdd;color:#3a2c14;border:1px solid #e3d4ab;border-radius:6px;padding:14px 16px;
+    font-size:14px;line-height:1.7;text-align:center}
   .invite-text p{margin:5px 0}
-  .invite-text .inv-title{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:12px}
+  .invite-text .inv-title{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:12px;color:#2a1f10}
   .invite-text .inv-sign{margin-top:12px;text-align:right;font-weight:700;font-style:italic}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
@@ -1651,7 +1652,7 @@ const Game = {
     let art=this._inviteArt||[[null]];
     for(let i=0;i<(((this._inviteRot||0)/90)%4);i++) art=this._rot90(art);
     const W=art[0]?art[0].length:1;
-    let g='<div class="invite-art" style="grid-template-columns:repeat('+W+',8px)">';
+    let g='<div class="invite-art" style="grid-template-columns:repeat('+W+',11px)">';
     art.forEach(row=>row.forEach(bg=>{ g+='<span style="background:'+(bg||'transparent')+'"></span>'; }));
     g+='</div>';
     const t=this._inviteTexts||[];
@@ -1689,7 +1690,7 @@ const Game = {
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 위의 <b>색칠된 그림</b>은 7글자 알파벳입니다. 글자가 똑바로 보일 때까지 아래 버튼으로 돌려보세요.</div>'
+        ? '<div class="sheet-hint">💡 위의 <b>색칠된 그림</b>은 7글자 알파벳입니다. 아래 버튼으로 돌려가며 맞춰보세요.<br><small>잘 안 보이면 — 노르빈 뮤지엄 입구에서 <b>힌트</b> → <b>정답</b>으로 확인할 수 있어요.</small></div>'
           +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌리기</button>'
         : '';
       const rb=document.getElementById('sheetRotBtn');
@@ -2688,7 +2689,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v71';
+var APP_VERSION='v72';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
