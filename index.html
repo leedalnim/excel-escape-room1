@@ -226,7 +226,7 @@
   .inv-item.picked{border-color:var(--gold);background:rgba(207,166,78,.18);color:var(--gold);font-weight:700}
   .inv-item .code{font-family:var(--mono);font-size:9px;color:#8f94a6;display:block}
   /* 아이템 사용 버튼 */
-  .item-actions{display:flex;gap:8px;margin:0 0 8px}
+  .item-actions{display:flex;gap:8px;margin:0 10px 10px}
   .item-use{flex:1;background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);
     color:var(--gold);font-family:var(--body);font-size:13px;font-weight:700;padding:9px;border-radius:4px;cursor:pointer;transition:.2s}
   .item-use:hover{background:var(--gold);color:#0b0c10}
@@ -658,7 +658,7 @@
   .modal button{margin-top:22px;background:var(--accent);border:none;color:#fff;font-family:var(--mono);
     font-size:12px;letter-spacing:.1em;padding:11px 22px;border-radius:3px;cursor:pointer}
 
-  .aside-actions{display:flex;gap:0;margin-bottom:18px}
+  .aside-actions{display:flex;gap:0;padding:16px 20px;border-bottom:1px solid var(--line)}
   .aside-actions button{flex:1 1 0;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
     color:var(--ink-dim);background:none;border:1px solid var(--line);padding:9px 6px;border-radius:0;
     cursor:pointer;transition:.2s;white-space:nowrap}
@@ -715,7 +715,6 @@
         <span class="badge" id="actBadge">ACT 1</span>
         <span class="title" id="actTitle">편지</span>
         <span class="tb-actions">
-          <button onclick="Game.undo()">↩ 돌아가기</button>
           <button onclick="Game.home()">처음으로</button>
           <button class="aside-toggle" onclick="Game.toggleAside()">🎒 가방</button>
         </span>
@@ -726,11 +725,10 @@
     <div class="scroll" id="scroll"></div>
     <div class="composer">
       <div class="row">
-        <span class="prompt">&gt;</span>
         <input id="kwInput" autocomplete="off" spellcheck="false" placeholder="키워드 코드를 입력하세요 (예: 시작)">
         <button class="send" onclick="Game.submit()">입력</button>
       </div>
-      <div class="hint">지문 속 ( ) 안의 키워드를 클릭하거나 직접 입력 · "Ctrl+Z" 또는 돌아가기 버튼으로 이전으로 <span id="verTag" style="float:right;opacity:.5;font-family:var(--mono)"></span></div>
+      <div class="hint">지문 속 ( ) 안의 키워드를 클릭하거나 직접 입력 · 이전으로는 "Ctrl+Z" 입력 또는 ↩ 돌아가기 선택 <span id="verTag" style="float:right;opacity:.5;font-family:var(--mono)"></span></div>
     </div>
   </div>
 
@@ -760,16 +758,13 @@
           <button class="cb-cancel" onclick="Game.toggleCombine()">취소</button>
         </div>
       </div>
-      <div class="detail-box">
+      <div class="detail-box" id="detailBox" style="display:none">
         <button class="item-drop" id="dropBtn" onclick="Game.dropSelectedItem()" title="버리기" aria-label="버리기" style="display:none">🗑</button>
         <div class="detail-out" id="detailOut"></div>
         <div class="item-actions" id="itemActions" style="display:none">
           <button class="item-use" id="useBtn" onclick="Game.useSelectedItem()">🔑 사용하기</button>
         </div>
-        <div class="detail-row">
-          <span class="prompt">+</span>
-          <input id="detailInput" autocomplete="off" spellcheck="false" placeholder="아이템 코드 입력 후 Enter로 추가">
-        </div>
+        <input id="detailInput" type="hidden">
       </div>
       <div class="inv-tip">아이템 칩을 누르면 설명·<b>사용</b> 버튼이 나옵니다. 여러 아이템을 합치려면 <b>🔧 조합</b>을 누르세요.</div>
     </div>
@@ -2199,6 +2194,7 @@ const Game = {
     const di=document.getElementById('detailInput'); if(di) di.value='';
     const acts=document.getElementById('itemActions'); if(acts) acts.style.display='none';
     const dropBtn=document.getElementById('dropBtn'); if(dropBtn) dropBtn.style.display='none';
+    const box=document.getElementById('detailBox'); if(box) box.style.display='none';
     const cb=document.getElementById('combineBar'); if(cb) cb.style.display='none';
   },
   // 아이템 버리기 (수동 삭제 — 확인 후)
@@ -2251,20 +2247,24 @@ const Game = {
   detailLookup(){
     const v=(document.getElementById('detailInput').value||'').trim();
     const out=document.getElementById('detailOut'); out.className='detail-out';
+    const box=document.getElementById('detailBox');
     const acts=document.getElementById('itemActions');
-    const it=this.data.items[v];
-    // 보유 중인 아이템을 볼 때만 버튼 노출 (사용은 실제 사용 가능한 것만, 버리기는 항상 — 우상단 아이콘)
     const useBtn=document.getElementById('useBtn');
     const dropBtn=document.getElementById('dropBtn');
-    if(it && this.inv[v]){ this.viewItem=v;
+    const it=this.data.items[v];
+    // 유효 아이템이 아니면 상세 박스를 통째로 숨김 (입력칸 없음 — 아이템 칩을 누르면 표시)
+    if(!v || !it){ this.viewItem=null; out.textContent='';
+      if(acts) acts.style.display='none'; if(dropBtn) dropBtn.style.display='none';
+      if(box) box.style.display='none'; return; }
+    if(box) box.style.display='';
+    // 보유 중인 아이템일 때만 버튼 노출 (사용은 실제 사용 가능한 것만, 버리기는 우상단 아이콘)
+    if(this.inv[v]){ this.viewItem=v;
       const usable=this.canResolve(v);
       if(dropBtn) dropBtn.style.display='flex';
       if(useBtn) useBtn.style.display=usable?'block':'none';
       if(acts) acts.style.display=usable?'flex':'none'; }
     else { this.viewItem=null; if(acts) acts.style.display='none'; if(dropBtn) dropBtn.style.display='none'; }
-    if(!v){ out.textContent=''; return; }
-    if(it){ out.textContent=(it.name && !/^HIDDEN/i.test(it.name)?('['+it.name+']\n'):'')+it.desc; }
-    else { out.textContent=''; }
+    out.textContent=(it.name && !/^HIDDEN/i.test(it.name)?('['+it.name+']\n'):'')+it.desc;
   },
 
   // Enter in the inventory field: add the item (or progress a hidden text clue)
@@ -2364,7 +2364,7 @@ function relabelData(o){
 }
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v46';
+var APP_VERSION='v47';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
