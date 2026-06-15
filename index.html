@@ -362,15 +362,16 @@
   .sheet-tbl td:empty{border-color:transparent}
   /* 시트 도구(힌트·돌려보기) */
   .sheet-tools{display:flex;flex-direction:column;gap:8px;align-items:stretch;margin-top:4px}
-  .sheet-hint{background:#fff7e0;color:#5b4a2c;border:1px solid #e6d3a3;border-radius:5px;padding:8px 11px;font-size:13px;line-height:1.55;text-align:left}
+  .sheet-hint{background:#e7f0f8;color:#27465f;border:1px solid #a9c8e0;border-radius:5px;padding:9px 12px;font-size:13px;line-height:1.55;text-align:left}
   .sheet-rot-btn{align-self:center;background:var(--gold);border:none;color:#17140c;font-weight:700;
     font-family:var(--mono);font-size:12px;padding:8px 18px;border-radius:4px;cursor:pointer}
   .sheet-rot-btn:hover{background:#e6c25a}
   /* 초대장: 색 픽셀 그림(단서) + 텍스트 카드 */
-  .invite-art{display:grid;grid-auto-rows:11px;gap:0;width:max-content;max-width:100%;margin:4px auto 14px;
-    padding:12px;background:#fff;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2);overflow:auto}
-  .invite-art span{display:block;width:11px;height:11px}
-  .invite-text{background:#f6efdd;color:#3a2c14;border:1px solid #e3d4ab;border-radius:6px;padding:14px 16px;
+  .invite-wrap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .invite-art{display:grid;grid-auto-rows:6px;gap:0;width:max-content;flex:0 0 auto;margin:0;
+    padding:8px;background:#fff;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2)}
+  .invite-art span{display:block;width:6px;height:6px}
+  .invite-text{flex:1;min-width:58%;background:#f6efdd;color:#3a2c14;border:1px solid #e3d4ab;border-radius:6px;padding:14px 16px;
     font-size:14px;line-height:1.7;text-align:center}
   .invite-text p{margin:5px 0;color:#3a2c14!important}
   .invite-text .inv-title{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:12px;color:#2a1f10}
@@ -1610,7 +1611,7 @@ const Game = {
   },
   // 지문 → HTML (아이템/시트 코드 버튼 + 쉬운모드 단어 탭/밑줄)
   renderStoryHtml(story){
-    const re=/(아이템\s*코드\s*[:：]\s*\w+|시트\s*코드\s*[:：]\s*\w+)/g;
+    const re=/(아이템\s*코드\s*[:：]\s*\w+|(?:시트|자료)\s*코드\s*[:：]\s*\w+)/g;
     let out='', last=0, m;
     while((m=re.exec(story))){ out+=this.wrapWords(story.slice(last,m.index)); out+=this.codeButton(m[0]); last=re.lastIndex; }
     out+=this.wrapWords(story.slice(last));
@@ -1621,7 +1622,7 @@ const Game = {
     if(im){ const c=im[1]; return this.data.items[c]
       ? '아이템 코드 : <button class="code-btn item'+(this.inv[c]?' got':'')+'" data-type="item" data-code="'+c+'">'+c+(this.inv[c]?' '+IC('check'):' '+IC('plus')+' 획득')+'</button>'
       : this.esc(s); }
-    let sm=s.match(/시트\s*코드\s*[:：]\s*(\w+)/);
+    let sm=s.match(/(?:시트|자료)\s*코드\s*[:：]\s*(\w+)/);
     if(sm){ const c=sm[1]; return (this.data.sheets&&this.data.sheets[c])
       ? '<button class="code-btn sheet" data-type="sheet" data-code="'+c+'">'+IC('file-text')+' '+this.esc((this.data.sheets[c]&&this.data.sheets[c].name)||'자료')+' 보기</button>'
       : this.esc(s); }
@@ -1720,17 +1721,17 @@ const Game = {
     let rot=((((this._inviteRot==null?90:this._inviteRot)/90)%4)+4)%4;
     for(let i=0;i<rot;i++) grid=this._rot90(grid);
     const W=grid[0].length;
-    let art='<div class="invite-art" style="grid-template-columns:repeat('+W+',10px)">';
+    let art='<div class="invite-art" style="grid-template-columns:repeat('+W+',6px)">';
     grid.forEach(line=>line.forEach(col=>{ art+='<span style="background:'+(col||'transparent')+'"></span>'; }));
     art+='</div>';
     const t=this._inviteTexts||[];
     const txt='<div class="invite-text">'+t.map((x,i)=>'<p class="'+(i===0?'inv-title':(i===t.length-1?'inv-sign':''))+'">'+this.esc(x)+'</p>').join('')+'</div>';
-    return art+txt;
+    return '<div class="invite-wrap">'+txt+art+'</div>';
   },
   openSheet(code){
     const s=this.data.sheets[code]; if(!s) return;
     if(!this.sheetsSeen.includes(code)){ this.sheetsSeen.push(code); this.renderSheets(); this.autoSave(); }
-    document.getElementById('sheetTitle').textContent=s.name;
+    document.getElementById('sheetTitle').textContent=(s.alpha?s.alpha+' · ':'')+s.name;
     const _sc=document.getElementById('sheetCode'); _sc.textContent=''; _sc.style.display='none';
     const widget=this.sheetWidget(this.act,code);
     let html=s.html||'<p>자료를 불러올 수 없습니다.</p>';
@@ -2155,7 +2156,7 @@ const Game = {
     g.innerHTML='';
     this.sheetsSeen.forEach(c=>{ const s=this.data.sheets[c]; if(!s) return;
       const d=document.createElement('div'); d.className='sheet-chip';
-      d.innerHTML=this.esc(s.name);
+      d.innerHTML=(s.alpha?'<b>'+this.esc(s.alpha)+'</b> · ':'')+this.esc(s.name);
       d.onclick=()=>this.openSheet(c); g.appendChild(d); });
   },
   renderSituations(){
@@ -2743,7 +2744,7 @@ function relabelData(o){
     .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.')
     // 제보 인터뷰 형식 안내 → 짧은 정답 허용 안내로
     .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'정답만 입력해주세요')
-    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'');
+    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'').replace(/시트/g,'자료');
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
@@ -2759,7 +2760,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v75';
+var APP_VERSION='v76';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){

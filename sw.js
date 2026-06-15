@@ -1,5 +1,5 @@
 // 비밀 방탈출 — 서비스 워커 (네트워크 우선: 온라인이면 항상 최신, 오프라인이면 캐시)
-const CACHE = 'escape-secret-v75';
+const CACHE = 'escape-secret-v76';
 
 self.addEventListener('install', e => { self.skipWaiting(); });
 
