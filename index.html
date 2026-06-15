@@ -2786,7 +2786,7 @@ function relabelData(o){
     .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.')
     // 제보 인터뷰 형식 안내 → 짧은 정답 허용 안내로
     .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'정답만 입력해주세요')
-    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'').replace(/시트/g,'자료').replace(/[A-Z]\s*자료/g,'자료').replace(/자료\s*[A-Z](?=[를을이가는은의에])/g,'자료').replace(/(각 전시관의 입구가 있다[\s\S]*?)\(\s*\?\s*\/\s*나가기\s*\)/, '$1(본능 / 예술 / 악마 / 나가기)').replace(/(어떤 책을 구입하시겠어요\?)/, '$1\n\n신문 기사에서 본 그 책의 제목을 점원에게 말해보세요.');
+    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'').replace(/시트/g,'자료').replace(/[A-Z]\s*자료/g,'자료').replace(/자료\s*[A-Z](?=[를을이가는은의에])/g,'자료').replace(/(각 전시관의 입구가 있다[\s\S]*?)\(\s*\?\s*\/\s*나가기\s*\)/, '$1(카운터 / 본능 / 예술 / 악마 / 나가기)').replace(/(어떤 책을 구입하시겠어요\?)/, '$1\n\n신문 기사에서 본 그 책의 제목을 점원에게 말해보세요.');
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
@@ -2809,7 +2809,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v81';
+var APP_VERSION='v82';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
