@@ -16,13 +16,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <style>
   :root{
     --bg:#13151c; --bg2:#1b1e27; --panel:#20242e; --panel2:#272c39;
     --ink:#f3efe6; --ink-dim:#c2bdb0; --line:#3a3f4d;
     --accent:#c0392b; --accent-dim:#7c2b22; --gold:#cfa64e; --blue:#5a7d9a;
     --ok:#6a8f5f; --bad:#b0463a;
-    --serif:'Nanum Myeongjo',serif; --body:'Gowun Batang',serif; --mono:'IBM Plex Mono',monospace;
+    --serif:'Nanum Myeongjo',serif; --body:'Gowun Batang',serif;
+    --mono:'IBM Plex Mono','Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -655,11 +657,13 @@
   .modal button{margin-top:22px;background:var(--accent);border:none;color:#fff;font-family:var(--mono);
     font-size:12px;letter-spacing:.1em;padding:11px 22px;border-radius:3px;cursor:pointer}
 
-  .aside-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-  .aside-actions button{flex:1 1 auto;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
-    color:var(--ink-dim);background:none;border:1px solid var(--line);padding:9px 10px;border-radius:3px;
+  .aside-actions{display:flex;gap:0;margin-bottom:18px}
+  .aside-actions button{flex:1 1 0;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+    color:var(--ink-dim);background:none;border:1px solid var(--line);padding:9px 6px;border-radius:0;
     cursor:pointer;transition:.2s;white-space:nowrap}
-  .aside-actions button:hover{color:var(--ink);border-color:var(--ink-dim)}
+  .aside-actions button+button{margin-left:-1px}
+  .aside-actions button:hover{color:var(--ink);border-color:var(--ink-dim);position:relative;z-index:1}
+  .aside-actions .ez-toggle.on{position:relative;z-index:1}
   .aside-toggle{display:none}
   .aside-close{display:none}
   .aside-backdrop{display:none;position:fixed;inset:0;background:rgba(5,6,9,.6);z-index:29}
@@ -2340,7 +2344,7 @@ function relabelData(o){
 }
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v42';
+var APP_VERSION='v43';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
