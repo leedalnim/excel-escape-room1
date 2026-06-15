@@ -637,6 +637,10 @@
   .notepad::placeholder{color:#928d82;font-style:italic}
   @keyframes itemPop{0%{background:rgba(207,166,78,.4);border-color:var(--gold);transform:scale(1.05)}100%{background:var(--panel2);border-color:var(--line);transform:scale(1)}}
   .inv-item.added{animation:itemPop 1.4s ease}
+  .true-end-btn{display:block;width:100%;margin-top:14px;background:linear-gradient(180deg,#3a3322,#241f16);
+    border:1px solid var(--gold);color:var(--gold);font-family:var(--body);font-size:14px;font-weight:700;
+    padding:11px;border-radius:4px;cursor:pointer;transition:.2s;animation:itemPop 1s ease}
+  .true-end-btn:hover{background:var(--gold);color:#17140c;box-shadow:0 6px 16px rgba(207,166,78,.4)}
   .ending-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dotted var(--line);cursor:pointer}
   .ending-row:last-child{border-bottom:none}
   .ending-row .pin{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
@@ -793,6 +797,7 @@
     <div class="sect" id="endSect" style="display:none">
       <h4>엔딩 리스트 <span class="ct" id="endCt">0 / 6</span></h4>
       <div id="endList"></div>
+      <button class="true-end-btn" id="trueEndBtn" style="display:none" onclick="Game.openTrueEnding()">🔓 진짜 엔딩 열기</button>
     </div>
   </aside>
 </section>
@@ -1040,8 +1045,9 @@ const Game = {
   // 현재 Act만 처음부터 (다른 Act 해금·진행은 유지)
   resetAct(){
     const meta=ACT_META[this.act]||{no:this.act,title:''};
-    if(!confirm((meta.no?meta.no+'. '+meta.title:'현재 화')+' 을(를) 처음부터 다시 시작할까요?\n이 화의 진행만 초기화되고, 다른 화 해금은 그대로 유지됩니다.')) return;
-    this.start(this.act);
+    if(!confirm((meta.no?meta.no+'. '+meta.title:'현재 화')+' 을(를) 처음부터 다시 시작할까요?\n진행은 초기화되지만, 지금까지 해금한 엔딩은 그대로 유지됩니다.')) return;
+    // 진행만 초기화하고 해금한 엔딩 코드는 유지 (엔딩 수집용 반복 플레이 지원)
+    this.start(this.act, {endings:Object.keys(this.endings)});
   },
 
   // ----- 첫 화면: 시작 / 이어하기 / 챕터 해금 -----
@@ -2379,6 +2385,22 @@ const Game = {
       r.innerHTML='<span class="pin">'+(i+1)+'</span><span class="en">'+(has?this.esc(en.name):'???')+'</span>';
       if(has){ r.onclick=()=>this.showModal(en.name,'엔딩 코드 · '+c,en.desc); }
       list.appendChild(r); });
+    // 모든 엔딩 해금 시 진짜 엔딩 버튼 노출 (엑셀의 "합 입력" 대체)
+    const btn=document.getElementById('trueEndBtn');
+    if(btn){ const done=all.length>0 && all.every(c=>this.endings[c]) && this.trueEndingKw()!==null;
+      btn.style.display=done?'block':'none'; }
+  },
+  // 진짜 엔딩 키워드 = 모든 엔딩 코드(숫자)의 합. 그 합으로 된 지문이 있어야 유효
+  trueEndingKw(){
+    const all=Object.keys(this.data.endings||{}).filter(c=>/^\d+$/.test(c));
+    if(!all.length) return null;
+    const sum=String(all.reduce((s,c)=>s+parseInt(c,10),0));
+    return this.findPassage(sum)!==null ? sum : null;
+  },
+  openTrueEnding(){
+    const kw=this.trueEndingKw(); if(!kw) return;
+    if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); }
+    this.lookupKeyword(kw,false);
   },
 
   showModal(t,c,b){ document.getElementById('mTitle').textContent=t;
@@ -2425,7 +2447,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v55';
+var APP_VERSION='v56';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
