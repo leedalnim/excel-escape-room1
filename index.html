@@ -1170,6 +1170,20 @@ const Game = {
     if(s && DATA[s.act]){ try{ const n=localStorage.getItem('excel_escape_notes'); if(n!==null) s.notes=n; }catch(e){} this.start(s.act, s); }
     else this.start(ACT_ORDER[0]);
   },
+  // 테스트 점프: Game.jump('act3','로비',1) 또는 URL #jump=act3,로비,1
+  jump(act, kw, level){
+    if(!DATA[act]){ this.toast('없는 액트: '+act); return; }
+    this.start(act);
+    if(level!=null && level!=='') this.level=parseInt(level,10)||0;
+    this.updateStep&&this.updateStep();
+    this.lookupKeyword(kw||'시작', false);
+  },
+  tryJump(){
+    const m=(location.hash||'').match(/jump=([^&]*)/); if(!m) return false;
+    try{ const p=decodeURIComponent(m[1]).split(/[,/]/).map(x=>x.trim());
+      if(p[0] && DATA[p[0]]){ this.jump(p[0], p[1], p[2]); return true; } }catch(e){}
+    return false;
+  },
   beginNew(){
     if(this.hasSave() && !confirm('처음부터 다시 시작할까요?\n저장된 진행과 챕터 해금 기록이 초기화됩니다.')) return;
     try{ localStorage.removeItem('excel_escape_progress'); localStorage.removeItem('excel_escape_carry');
@@ -2752,7 +2766,7 @@ function relabelData(o){
 }
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.loadProgress();
   // 저장이 있으면 새로고침 시 메뉴를 거치지 않고 바로 이어서 (진행이 사라진 것처럼 보이지 않도록)
-  if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
+  if(!Game.tryJump()){ if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); } }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // Lucide 아이콘 변환: 최초 1회 + DOM 변경 때마다(디바운스) <i data-lucide> → <svg>
 renderIcons();
@@ -2761,7 +2775,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v79';
+var APP_VERSION='v80';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
