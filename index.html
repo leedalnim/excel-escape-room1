@@ -230,9 +230,10 @@
   .item-use{flex:1;background:linear-gradient(180deg,#3a3322,#241f16);border:1px solid var(--gold);
     color:var(--gold);font-family:var(--body);font-size:13px;font-weight:700;padding:9px;border-radius:4px;cursor:pointer;transition:.2s}
   .item-use:hover{background:var(--gold);color:#0b0c10}
-  .item-drop{background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
-    font-family:var(--body);font-size:13px;padding:9px 12px;border-radius:4px;cursor:pointer;transition:.2s}
-  .item-drop:hover{border-color:var(--bad);color:var(--bad)}
+  .item-drop{position:absolute;top:6px;right:6px;z-index:2;width:26px;height:26px;padding:0;
+    display:flex;align-items:center;justify-content:center;line-height:1;font-size:13px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);border-radius:4px;cursor:pointer;transition:.2s}
+  .item-drop:hover{border-color:var(--bad);color:var(--bad);background:rgba(176,70,58,.12)}
   /* 조합 */
   .inv-combine-btn{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
     font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:4px 9px;border-radius:20px;cursor:pointer;transition:.2s}
@@ -613,14 +614,14 @@
   .load-row button{background:transparent;border:1px solid var(--gold);color:var(--gold);
     font-family:var(--mono);font-size:12px;letter-spacing:.1em;padding:11px 18px;border-radius:3px;cursor:pointer;transition:.2s}
   .load-row button:hover{background:var(--gold);color:#0b0c10}
-  .detail-box{background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:0 0 8px;margin-bottom:6px}
+  .detail-box{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:0 0 8px;margin-bottom:6px}
   .detail-row{display:flex;gap:6px;padding:8px 10px}
   .detail-row .prompt{font-family:var(--mono);color:var(--gold);font-size:14px}
   .detail-row input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--line);
     color:var(--ink);font-family:var(--mono);font-size:14px;padding:4px 2px;outline:none}
   .detail-row input::placeholder{font-family:var(--body);font-size:12px;color:var(--ink-dim);opacity:.8}
   .detail-row input:focus{border-color:var(--gold)}
-  .detail-out{padding:4px 12px 8px;font-size:13px;color:var(--ink-dim);white-space:pre-wrap;min-height:6px;font-family:var(--body)}
+  .detail-out{padding:4px 38px 8px 12px;font-size:13px;color:var(--ink-dim);white-space:pre-wrap;min-height:6px;font-family:var(--body)}
   .detail-out.ok{color:#9bc48f}
   .detail-out.bad{color:var(--bad)}
   .inv-tip{font-size:11.5px;color:#9a9fb0;line-height:1.55;margin-top:10px}
@@ -760,10 +761,10 @@
         </div>
       </div>
       <div class="detail-box">
+        <button class="item-drop" id="dropBtn" onclick="Game.dropSelectedItem()" title="버리기" aria-label="버리기" style="display:none">🗑</button>
         <div class="detail-out" id="detailOut"></div>
         <div class="item-actions" id="itemActions" style="display:none">
           <button class="item-use" id="useBtn" onclick="Game.useSelectedItem()">🔑 사용하기</button>
-          <button class="item-drop" id="dropBtn" onclick="Game.dropSelectedItem()">🗑 버리기</button>
         </div>
         <div class="detail-row">
           <span class="prompt">+</span>
@@ -943,6 +944,9 @@ const ACT_ROOMS = {
   ]
 };
 
+// 다음 액트로 이어받을(두 액트 모두 의미 있는) 아이템 코드만. 8463=켜진 MP3, 169=작은방 열쇠
+const CARRY_OVER = { act2:['8463','169'] };
+
 const Game = {
   act:null, data:null, level:0, history:[], inv:{}, endings:{}, notes:'', places:[], parents:{}, here:'', lastKw:'', adj:{}, hubSet:null, cleared:[], sheetsSeen:[], expanded:null, talkState:null, viewpoint:'belkin', combineMode:false, combineSel:null, viewItem:null, situations:null,
 
@@ -972,10 +976,11 @@ const Game = {
       this.viewpoint=resume.viewpoint||'belkin';
       this.situations=resume.situations||{};
     }
-    // Act 1 → Act 2 인벤토리 이어받기 (원작: "같은 공간이기 때문"). act2.items에 있는 코드만, 이미 가진 건 유지
-    if(key==='act2'){
+    // Act 1 → Act 2 인벤토리 이어받기 (원작: "같은 공간"). 두 액트 모두 의미 있는 핵심 아이템만 — 켜진 MP3, 작은방 열쇠
+    const allow=CARRY_OVER[key];
+    if(allow){
       try{ const carry=JSON.parse(localStorage.getItem('excel_escape_carry')||'[]');
-        if(Array.isArray(carry)) carry.forEach(c=>{ if(this.data.items[c] && !this.inv[c]) this.inv[c]=this.data.items[c]; });
+        if(Array.isArray(carry)) carry.forEach(c=>{ if(allow.indexOf(c)>=0 && this.data.items[c] && !this.inv[c]) this.inv[c]=this.data.items[c]; });
       }catch(e){}
     }
     this.renderInv(); this.renderEndings(); this.renderPlaces(); this.renderSheets(); this.renderViewpoint(); this.renderSituations();
@@ -2193,10 +2198,12 @@ const Game = {
     const out=document.getElementById('detailOut'); if(out){ out.className='detail-out'; out.textContent=''; }
     const di=document.getElementById('detailInput'); if(di) di.value='';
     const acts=document.getElementById('itemActions'); if(acts) acts.style.display='none';
+    const dropBtn=document.getElementById('dropBtn'); if(dropBtn) dropBtn.style.display='none';
     const cb=document.getElementById('combineBar'); if(cb) cb.style.display='none';
   },
-  // 아이템 버리기 (수동 삭제)
+  // 아이템 버리기 (수동 삭제 — 확인 후)
   dropSelectedItem(){ const c=this.viewItem; if(!c||!this.inv[c]) return; const nm=this.inv[c].name||c;
+    if(!confirm('"'+nm+'" 을(를) 버리시겠습니까?')) return;
     delete this.inv[c]; this.clearItemDetail();
     this.renderInv(); this.autoSave(); this.toast('버림 — '+nm); },
   // 조합 모드
@@ -2246,11 +2253,15 @@ const Game = {
     const out=document.getElementById('detailOut'); out.className='detail-out';
     const acts=document.getElementById('itemActions');
     const it=this.data.items[v];
-    // 보유 중인 아이템을 볼 때만 버튼 노출 (사용은 실제 사용 가능한 것만, 버리기는 항상)
+    // 보유 중인 아이템을 볼 때만 버튼 노출 (사용은 실제 사용 가능한 것만, 버리기는 항상 — 우상단 아이콘)
     const useBtn=document.getElementById('useBtn');
-    if(it && this.inv[v]){ this.viewItem=v; if(acts) acts.style.display='flex';
-      if(useBtn) useBtn.style.display=this.canResolve(v)?'block':'none'; }
-    else { this.viewItem=null; if(acts) acts.style.display='none'; }
+    const dropBtn=document.getElementById('dropBtn');
+    if(it && this.inv[v]){ this.viewItem=v;
+      const usable=this.canResolve(v);
+      if(dropBtn) dropBtn.style.display='flex';
+      if(useBtn) useBtn.style.display=usable?'block':'none';
+      if(acts) acts.style.display=usable?'flex':'none'; }
+    else { this.viewItem=null; if(acts) acts.style.display='none'; if(dropBtn) dropBtn.style.display='none'; }
     if(!v){ out.textContent=''; return; }
     if(it){ out.textContent=(it.name && !/^HIDDEN/i.test(it.name)?('['+it.name+']\n'):'')+it.desc; }
     else { out.textContent=''; }
@@ -2353,7 +2364,7 @@ function relabelData(o){
 }
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v45';
+var APP_VERSION='v46';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
