@@ -394,7 +394,7 @@
   .pamph-submit:hover{background:#e6c25a}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
-  .sheet-card h3{display:flex;align-items:center;gap:10px}
+  .sheet-card h3{display:flex;align-items:center;justify-content:center!important;gap:10px;color:var(--gold)!important;font-family:var(--serif)!important;font-size:21px!important}
   .sheet-card[data-theme=paper]{background:linear-gradient(180deg,#f3ead6,#e6dabf);border:1px solid #b9a983;
     box-shadow:0 20px 60px rgba(0,0,0,.55),inset 0 0 70px rgba(120,90,40,.14)}
   .sheet-card[data-theme=paper] h3{color:#5b4a2c}.sheet-card[data-theme=paper] .ec{color:#8a6d35}
@@ -1712,9 +1712,9 @@ const Game = {
     };
     const word='SCALPEL', pal=['#C80051','#FFC000','#00B0F0','#7030A0','#92D050','#B85C00','#B686DA'];
     let grid=[];
-    for(let r=0;r<7;r++){ const line=[];
-      word.split('').forEach((ch,li)=>{ const g=F[ch]||F.L, color=pal[li%pal.length];
-        for(let c=0;c<5;c++) line.push(g[r][c]==='1'?color:null); line.push(null); });
+    for(let r=0;r<7;r++){ const line=[]; let gc=0;
+      word.split('').forEach((ch,li)=>{ const g=F[ch]||F.L;
+        for(let c=0;c<5;c++){ line.push(g[r][c]==='1'?pal[(gc+r*2+li)%pal.length]:null); gc++; } line.push(null); gc++; });
       grid.push(line);
     }
     grid=this._rot90(grid); // SCALPEL은 카드에 옆으로 적혀 있음(단서) — 카드 전체를 돌려서 읽음
@@ -2759,7 +2759,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v77';
+var APP_VERSION='v78';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
