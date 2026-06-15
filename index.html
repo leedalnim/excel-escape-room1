@@ -947,6 +947,10 @@ const Game = {
 
   start(key, resume){
     this.data = DATA[key]; this.act = key;
+    // 명시적 resume이 없으면 해당 액트의 개별 저장을 불러와 이어가기 (액트 전환 시 진행 보존)
+    if(!resume){ try{ const ps=this.decode(localStorage.getItem('excel_escape_act_'+key));
+      if(ps && ps.act===key){ resume=ps; const n=localStorage.getItem('excel_escape_notes'); if(n!==null) resume.notes=n; }
+    }catch(e){} }
     this.level = 0; this.history = []; this.inv = {}; this.endings = {}; this.places=[]; this.parents={}; this.here=''; this.lastKw=''; this.sheetsSeen=[]; this.expanded=new Set(); this.talkState=null; this.viewpoint='belkin'; this.situations={};
     this.seenKw=new Set((resume&&resume.seen)||[]);
     this.viewItem=null; this.combineMode=false; this.combineSel=null; this.clearItemDetail();
@@ -1060,7 +1064,10 @@ const Game = {
   },
   beginNew(){
     if(this.hasSave() && !confirm('처음부터 다시 시작할까요?\n저장된 진행과 챕터 해금 기록이 초기화됩니다.')) return;
-    try{ localStorage.removeItem('excel_escape_progress'); localStorage.removeItem('excel_escape_carry'); }catch(e){}
+    try{ localStorage.removeItem('excel_escape_progress'); localStorage.removeItem('excel_escape_carry');
+      localStorage.removeItem('excel_escape_save');
+      ACT_ORDER.forEach(a=>localStorage.removeItem('excel_escape_act_'+a));
+    }catch(e){}
     this.cleared=[];
     this.start(ACT_ORDER[0]);
   },
@@ -1863,7 +1870,9 @@ const Game = {
     if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(done,()=>{document.execCommand('copy');done();}); }
     else { document.execCommand('copy'); done(); }
   },
-  autoSave(){ try{ localStorage.setItem('excel_escape_save', this.encode(this.snapshot()));
+  autoSave(){ try{ const enc=this.encode(this.snapshot());
+    localStorage.setItem('excel_escape_save', enc);                 // 가장 최근 진행(메뉴 "이어서 하기"용)
+    if(this.act) localStorage.setItem('excel_escape_act_'+this.act, enc); // 액트별 개별 저장
     localStorage.setItem('excel_escape_notes', this.notes||'');
     // Act 1 인벤토리는 Act 2로 이어짐(원작: 같은 저택) → 별도로 보존
     if(this.act==='act1') localStorage.setItem('excel_escape_carry', JSON.stringify(Object.keys(this.inv)));
@@ -2171,7 +2180,7 @@ const Game = {
   },
 
   addItem(code){ const it=this.data.items[code]; if(!it) return;
-    this.inv[code]=it; this.renderInv(); },
+    this.inv[code]=it; this.renderInv(); this.autoSave(); },
   renderInv(){
     const g=document.getElementById('invGrid'); const codes=Object.keys(this.inv);
     document.getElementById('invCt').textContent=codes.length;
@@ -2367,7 +2376,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v48';
+var APP_VERSION='v49';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
