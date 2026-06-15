@@ -375,6 +375,21 @@
   .invite-text p{margin:5px 0;color:#3a2c14!important}
   .invite-text .inv-title{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:12px;color:#2a1f10}
   .invite-text .inv-sign{margin-top:12px;text-align:right;font-weight:700;font-style:italic}
+  /* 팜플렛(전시 안내 + 응모권 폼) */
+  .pamph{text-align:left}
+  .pamph p{color:#3a2c14!important}
+  .pamph-title{font-family:var(--serif);font-size:18px;text-align:center;margin-bottom:14px;color:#2a1f10}
+  .pamph-sec{background:#f6efdd;border:1px solid #e3d4ab;border-radius:6px;padding:13px 15px;margin-bottom:12px;color:#3a2c14}
+  .pamph-h{font-weight:700;color:#7a2b2b;margin-bottom:8px;text-align:center}
+  .pamph-sec p{margin:8px 0;font-size:13px;line-height:1.55}
+  .pamph-note{font-size:12px;color:#6b5836;margin:4px 0 12px}
+  .pamph-q{display:block;font-size:13px;font-weight:700;color:#3a2c14;margin:12px 0;line-height:1.5}
+  .pamph-q input{display:block;width:100%;margin-top:6px;padding:9px 11px;border:1px solid #c8b58a;
+    border-radius:5px;background:#fffdf6;color:#222;font-size:14px;font-weight:400;font-family:var(--body);box-sizing:border-box}
+  .pamph-q input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(207,166,78,.25)}
+  .pamph-submit{display:block;width:100%;margin-top:10px;background:var(--gold);color:#17140c;border:none;
+    font-weight:700;font-size:15px;padding:11px;border-radius:6px;cursor:pointer}
+  .pamph-submit:hover{background:#e6c25a}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;gap:10px}
@@ -1641,6 +1656,35 @@ const Game = {
   },
 
   // ----- 시트(자료) 채널 -----
+  // 팜플렛: 전시 안내 + 입력 가능한 경품 응모권 폼으로 재구성
+  renderPamphletHtml(){
+    return '<div class="pamph">'
+      +'<h4 class="pamph-title">"아가사 페리" 특별 전시회</h4>'
+      +'<div class="pamph-sec"><div class="pamph-h">♠ 전시 안내 ♠</div>'
+      +'<p><b>제 1관 : 본능</b><br>유년시절, 꿈틀거리던 본능에 대하여</p>'
+      +'<p><b>제 2관 : 예술</b><br>아름다운 죽음은 예술이 될 수 있기에</p>'
+      +'<p><b>제 3관 : 악마</b><br>나는 사람이 아니라 악마이기 때문에</p></div>'
+      +'<div class="pamph-sec"><div class="pamph-h">♠ 경품 응모권 ♠</div>'
+      +'<p class="pamph-note">모든 전시관을 관람하고 아래 QUIZ를 푼 뒤, 정답을 칸에 적어 응모하세요.</p>'
+      +'<label class="pamph-q">Q1. "아가페 리사"의 중학생 모습을 그린 작품의 이름은?<input id="raf-q1" autocomplete="off" spellcheck="false" placeholder="정답"></label>'
+      +'<label class="pamph-q">Q2. 오늘 기준 "아가페 리사"의 나이는? (만 나이)<input id="raf-q2" autocomplete="off" spellcheck="false" placeholder="정답"></label>'
+      +'<label class="pamph-q">Q3. 병원에서 벌어졌던 살인사건 피해자의 사망 사인은?<input id="raf-q3" autocomplete="off" spellcheck="false" placeholder="정답"></label>'
+      +'<label class="pamph-q">성함<input id="raf-name" autocomplete="off" spellcheck="false" placeholder="편지 참고"></label>'
+      +'<label class="pamph-q">주소<input id="raf-addr" autocomplete="off" spellcheck="false" placeholder="편지 참고"></label>'
+      +'<button class="pamph-submit" onclick="Game.submitRaffle()">응모하기</button></div>'
+      +'</div>';
+  },
+  submitRaffle(){
+    const get=id=>{ const el=document.getElementById(id); return el?(el.value||'').trim():''; };
+    const nrm=s=>String(s).replace(/[\s,.\-·]/g,'').toLowerCase();
+    const ans={q1:'소원',q2:'36',q3:'독살',name:'렉스터 벨킨',addr:'56 3rd Ave, Seattle'};
+    const ok = nrm(get('raf-q1'))===nrm(ans.q1) && nrm(get('raf-q2'))===nrm(ans.q2) && nrm(get('raf-q3'))===nrm(ans.q3)
+      && nrm(get('raf-name'))===nrm(ans.name) && nrm(get('raf-addr'))===nrm(ans.addr);
+    if(!ok){ this.toast('아직 정답이 아닌 칸이 있어요. 전시·편지를 다시 확인해보세요.'); return; }
+    if(this.level<1){ this.level=1; this.updateStep(); }
+    document.getElementById('sheetModal').classList.remove('on');
+    this.lookupKeyword('응모하기', false); this.autoSave();
+  },
   // 초대장 엑셀표 파싱 → 색 그림(2D 배열) + 텍스트 줄 분리
   buildInviteView(html){
     const rows=String(html).split('<tr>').slice(1).map(r=>
@@ -1688,6 +1732,8 @@ const Game = {
     let html=s.html||'<p>자료를 불러올 수 없습니다.</p>';
     // 초대장: 넓은 엑셀표 → 색 그림(단서)+텍스트(카드)로 분리해 재구성
     if(s.name==='초대장'){ this.buildInviteView(s.html); html=this.renderInviteHtml(); }
+    // 팜플렛: 깨진 엑셀표 → 전시 안내 + 입력 가능한 응모권 폼으로 재구성
+    if(s.name==='팜플렛'){ html=this.renderPamphletHtml(); }
     // 인터랙티브 위젯이 있는 시트는 엑셀 빈칸 격자표가 흉하므로 숨기고 위젯만 노출
     if(widget){
       html = (this.act==='act3' && code==='82')
@@ -2706,7 +2752,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v73';
+var APP_VERSION='v74';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
