@@ -1244,7 +1244,7 @@ const Game = {
       const t=raw.trim();
       if(/^[-–—]/.test(t)){ cur={who:'det', parts:[t.replace(/^[-–—]\s*/,'')]}; turns.push(cur); }
       else if(/^["“]/.test(t)){ cur={who:'me', parts:[t]}; turns.push(cur); }
-      else if(/^\(/.test(t)){ turns.push({who:'narr', parts:[t]}); cur=null; }  // (저는 ?입니다.) 같은 형식 힌트 → 말풍선 밖
+      else if(/^[(（]/.test(t) || /^정답만\s*입력/.test(t)){ turns.push({who:'narr', parts:[t]}); cur=null; }  // 형식 힌트 → 말풍선 밖
       else if(cur){ cur.parts.push(t); }
       else if(t){ turns.push({who:'narr', parts:[t]}); cur=null; }
     });
@@ -2587,7 +2587,7 @@ function relabelData(o){
     .replace(/이후 진행은 "인벤토리" 내의 상세 설명 칸에\s*키워드를 입력해서 진행하게 됩니다\./g,'이후 진행은 아래 키워드 입력창에 키워드를 입력하여 진행합니다.')
     .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.')
     // 제보 인터뷰 형식 안내 → 짧은 정답 허용 안내로
-    .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'(정답만 입력해도 됩니다 — 예: 렉스터 벨킨)')
+    .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'정답만 입력해주세요')
     .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'');
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
@@ -2604,7 +2604,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v65';
+var APP_VERSION='v66';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
