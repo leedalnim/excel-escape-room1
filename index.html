@@ -353,7 +353,7 @@
   .sheet-chip:hover{border-color:var(--blue);color:var(--blue)}
   .sheet-chip b{color:var(--gold);font-family:var(--mono);font-size:12px}
   .sheet-chip .code{font-family:var(--mono);font-size:9px;color:#8f94a6;display:block}
-  .sheet-card{max-width:min(92vw,720px);width:auto}
+  .sheet-card{max-width:min(96vw,880px);width:auto}
   .sheet-scroll{max-height:60vh;overflow:auto;margin:6px 0 4px;background:#fff;border-radius:3px;padding:10px}
   .sheet-scroll::-webkit-scrollbar{height:8px;width:8px}.sheet-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:8px}
   .sheet-tbl{border-collapse:collapse;margin:0 auto;background:#fff;color:#111;font-family:var(--mono);font-size:12px}
@@ -372,7 +372,7 @@
   .invite-art span{display:block;width:11px;height:11px}
   .invite-text{background:#f6efdd;color:#3a2c14;border:1px solid #e3d4ab;border-radius:6px;padding:14px 16px;
     font-size:14px;line-height:1.7;text-align:center}
-  .invite-text p{margin:5px 0}
+  .invite-text p{margin:5px 0;color:#3a2c14!important}
   .invite-text .inv-title{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:12px;color:#2a1f10}
   .invite-text .inv-sign{margin-top:12px;text-align:right;font-weight:700;font-style:italic}
   /* ===== Design revival: themed documents ===== */
@@ -701,6 +701,7 @@
   .modal h3{font-family:var(--serif);font-size:22px;margin-bottom:6px}
   .modal .ec{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.2em;margin-bottom:16px}
   .modal p{white-space:pre-wrap;font-size:15px;color:var(--ink);line-height:1.7}
+  .modal .card>button{display:block;margin-left:auto;margin-right:auto}
   .modal button{margin-top:22px;background:var(--accent);border:none;color:#fff;font-family:var(--mono);
     font-size:12px;letter-spacing:.1em;padding:11px 22px;border-radius:3px;cursor:pointer}
 
@@ -1223,6 +1224,11 @@ const Game = {
     let passage = this.findPassage(kw);
     // 공백 불일치 보정: "힌트 1-3" → "힌트1-3" 처럼 공백만 다른 키워드 재시도
     if(passage===null){ const ns=kw.replace(/\s+/g,''); if(ns!==kw && this.findPassage(ns)!==null){ kw=ns; passage=this.findPassage(ns); } }
+    // 대소문자 무시 보정: "scalpel" → "SCALPEL"
+    if(passage===null){ const low=kw.toLowerCase(); let hit=null;
+      const scan=(arr)=>{ for(let l=arr.length-1;l>=0;l--){ const dict=arr[l]; if(dict) for(const k in dict){ if(k.toLowerCase()===low){ return k; } } } return null; };
+      hit=scan(this.data.levels);
+      if(hit){ kw=hit; passage=this.findPassage(hit); } }
     if(passage===null){
       // sheet code? show the reference material instead of an error
       if(this.data.sheets && (this.data.sheets[kw]||this.data.sheets[kw.replace(/\s+/g,'')])){ this.openSheet(this.data.sheets[kw]?kw:kw.replace(/\s+/g,'')); return; }
@@ -1649,15 +1655,29 @@ const Game = {
   },
   _rot90(grid){ const H=grid.length,W=grid[0].length,o=[]; for(let c=0;c<W;c++){ const row=[]; for(let r=H-1;r>=0;r--) row.push(grid[r][c]); o.push(row); } return o; },
   renderInviteHtml(){
-    let art=this._inviteArt||[[null]];
-    for(let i=0;i<(((this._inviteRot||0)/90)%4);i++) art=this._rot90(art);
-    const W=art[0]?art[0].length:1;
-    let g='<div class="invite-art" style="grid-template-columns:repeat('+W+',11px)">';
-    art.forEach(row=>row.forEach(bg=>{ g+='<span style="background:'+(bg||'transparent')+'"></span>'; }));
-    g+='</div>';
+    // 원본 색블록은 글자 모양이 없어 읽을 수 없으므로, 정답을 읽히는 컬러 픽셀 글자로 재현
+    const F={
+      S:["01111","10000","10000","01110","00001","00001","11110"],
+      C:["01110","10001","10000","10000","10000","10001","01110"],
+      A:["01110","10001","10001","11111","10001","10001","10001"],
+      L:["10000","10000","10000","10000","10000","10000","11111"],
+      P:["11110","10001","10001","11110","10000","10000","10000"],
+      E:["11111","10000","10000","11110","10000","10000","11111"]
+    };
+    const word='SCALPEL', pal=['#C80051','#FFC000','#00B0F0','#7030A0','#92D050','#B85C00','#B686DA'];
+    const grid=[];
+    for(let r=0;r<7;r++){ const line=[];
+      word.split('').forEach((ch,li)=>{ const g=F[ch]||F.L, color=pal[li%pal.length];
+        for(let c=0;c<5;c++) line.push(g[r][c]==='1'?color:null); line.push(null); });
+      grid.push(line);
+    }
+    const W=grid[0].length;
+    let art='<div class="invite-art" style="grid-template-columns:repeat('+W+',10px)">';
+    grid.forEach(line=>line.forEach(col=>{ art+='<span style="background:'+(col||'transparent')+'"></span>'; }));
+    art+='</div>';
     const t=this._inviteTexts||[];
-    let txt='<div class="invite-text">'+t.map((x,i)=>'<p class="'+(i===0?'inv-title':(i===t.length-1?'inv-sign':''))+'">'+this.esc(x)+'</p>').join('')+'</div>';
-    return g+txt;
+    const txt='<div class="invite-text">'+t.map((x,i)=>'<p class="'+(i===0?'inv-title':(i===t.length-1?'inv-sign':''))+'">'+this.esc(x)+'</p>').join('')+'</div>';
+    return art+txt;
   },
   openSheet(code){
     const s=this.data.sheets[code]; if(!s) return;
@@ -1690,11 +1710,8 @@ const Game = {
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 위의 <b>색칠된 그림</b>은 7글자 알파벳입니다. 아래 버튼으로 돌려가며 맞춰보세요.<br><small>잘 안 보이면 — 노르빈 뮤지엄 입구에서 <b>힌트</b> → <b>정답</b>으로 확인할 수 있어요.</small></div>'
-          +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌리기</button>'
+        ? '<div class="sheet-hint">💡 위 색칠 그림이 <b>입장 키워드(7글자 알파벳)</b>입니다. 대·소문자 구분 없이 입력하면 돼요.</div>'
         : '';
-      const rb=document.getElementById('sheetRotBtn');
-      if(rb) rb.onclick=()=>{ this._inviteRot=((this._inviteRot||0)+90)%360; document.getElementById('sheetBody').innerHTML=this.renderInviteHtml(); };
     }
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
@@ -2689,7 +2706,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v72';
+var APP_VERSION='v73';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
