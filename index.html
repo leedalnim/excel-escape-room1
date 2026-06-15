@@ -1243,6 +1243,23 @@ const Game = {
     this.autoSave();
   },
   // 제보 인터뷰 대사를 카톡식 말풍선으로: "..." = 나(벨킨, 오른쪽), - ... = 형사(왼쪽)
+  // 일반 지문 속 NPC 대사("- ...") 판별 (코드/장식 줄 제외)
+  isDialogueLine(t){ return /^[-–—]\s+\S/.test(t) && /[가-힣]/.test(t) && !/코드\s*[:：]/.test(t) && !/[-–—]\s*$/.test(t); },
+  hasDialogueLine(story){ return String(story).split('\n').some(l=>this.isDialogueLine(l.trim())); },
+  // 일반 지문: 서술은 보통 텍스트(밑줄·코드버튼), "- ..." NPC 대사는 말풍선으로
+  renderStoryWithDialogue(story){
+    const lines=String(story).split('\n'); let html=''; let narr=[]; let bub=null;
+    const flushNarr=()=>{ const txt=narr.join('\n').replace(/\n{3,}/g,'\n\n').trim(); if(txt) html+=this.renderStoryHtml(txt); narr=[]; };
+    const flushBub=()=>{ if(bub){ const txt=bub.join('\n').replace(/[""“”]/g,'').trim();
+      if(txt) html+='<div class="dlg-row det"><div class="dlg-wrap"><div class="dlg-bubble">'+this.esc(txt).replace(/\n/g,'<br>')+'</div></div></div>'; bub=null; } };
+    for(const raw of lines){ const t=raw.trim();
+      if(this.isDialogueLine(t)){ flushNarr(); if(!bub) bub=[]; bub.push(t.replace(/^[-–—]\s*/,'')); }
+      else if(bub){ if(t==='') flushBub(); else bub.push(t); }
+      else narr.push(raw);
+    }
+    flushBub(); flushNarr();
+    return html;
+  },
   renderDialogue(text){
     const turns=[]; let cur=null;
     String(text).split('\n').forEach(raw=>{
@@ -2193,7 +2210,7 @@ const Game = {
 
     const p=document.createElement('div');
     p.className='passage'+(opt.bad?' bad':'')+(opt.notice?' notice':'');
-    let shtml=this.renderStoryHtml(story);
+    let shtml=this.hasDialogueLine(story)?this.renderStoryWithDialogue(story):this.renderStoryHtml(story);
     p.innerHTML=tagHtml+shtml;
     if((tagHtml+shtml).trim()) e.appendChild(p);
     if(letterEl){ e.appendChild(letterEl); }
@@ -2618,7 +2635,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v68';
+var APP_VERSION='v69';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
