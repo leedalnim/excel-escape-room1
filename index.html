@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
   :root{
     --bg:#13151c; --bg2:#1b1e27; --panel:#20242e; --panel2:#272c39;
@@ -212,6 +213,13 @@
   .hint-acc summary:hover{opacity:1}
   .hint-acc[open] summary{opacity:1;margin-bottom:4px}
   .hint-body{font-size:13px;color:#cdbb86;line-height:1.65;border-left:2px solid var(--gold);padding:4px 0 4px 12px}
+  /* Lucide 아이콘 */
+  [data-lucide]{display:inline-block;width:1.05em;height:1.05em;vertical-align:-0.16em}
+  svg.lucide{width:1.05em;height:1.05em;vertical-align:-0.16em;stroke-width:2}
+  button svg.lucide,button [data-lucide]{margin-right:.35em}
+  .map-chip svg.lucide,.map-chip [data-lucide]{margin:0;width:13px;height:13px;vertical-align:-0.12em}
+  .item-drop svg.lucide,.item-drop [data-lucide]{margin:0;width:15px;height:15px}
+  .loc-banner svg.lucide,.loc-banner [data-lucide]{margin-right:.25em;width:14px;height:14px}
   @keyframes inpulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.55)}70%{box-shadow:0 0 0 9px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
   .composer input.pulse{animation:inpulse 1s ease 2;border-color:var(--accent)!important}
   .choices .chip.back{color:var(--blue);background:transparent;border-color:var(--blue)}
@@ -723,7 +731,7 @@
   </div>
   <div class="chapters" id="chapters"></div>
   <div class="load-row">
-    <button onclick="Game.openLoad()">🔑 코드로 이어하기</button>
+    <button onclick="Game.openLoad()"><i data-lucide="key"></i>코드로 이어하기</button>
   </div>
   <div class="credit">원작 ⓒ Nandy · <a href="https://m.blog.naver.com/4490yy/223024731447" target="_blank" rel="noopener">원작자 블로그</a> · <button class="install-link" onclick="Game.showInstall()">홈 화면에 추가</button></div>
 </section>
@@ -737,7 +745,7 @@
         <span class="title" id="actTitle">편지</span>
         <span class="tb-actions">
           <button onclick="Game.home()">처음으로</button>
-          <button class="aside-toggle" onclick="Game.toggleAside()">🎒 가방</button>
+          <button class="aside-toggle" onclick="Game.toggleAside()"><i data-lucide="backpack"></i>가방</button>
         </span>
       </div>
       <span class="step" id="stepInfo">단계 1</span>
@@ -755,20 +763,20 @@
 
   <div class="aside-backdrop" id="asideBackdrop" onclick="Game.toggleAside()"></div>
   <aside class="aside" id="aside">
-    <button class="aside-close" onclick="Game.toggleAside()">✕ 닫기</button>
+    <button class="aside-close" onclick="Game.toggleAside()"><i data-lucide="x"></i>닫기</button>
     <div class="aside-actions">
-      <button onclick="Game.openSave()">💾 저장</button>
-      <button onclick="Game.resetAct()">↻ 이 화 다시</button>
+      <button onclick="Game.openSave()"><i data-lucide="save"></i>저장</button>
+      <button onclick="Game.resetAct()"><i data-lucide="rotate-ccw"></i>이 화 다시</button>
       <button class="ez-toggle" id="ezToggle" onclick="Game.toggleEasy()">✨ 쉬운입력 ON</button>
     </div>
     <div class="sect" id="placeSect">
       <h4>탐색 지도 <span class="ct" id="placeCt">0</span></h4>
       <div class="map-summary" id="mapSummary"><span class="inv-empty">아직 둘러본 곳이 없습니다</span></div>
-      <button class="map-open" id="mapOpenBtn" onclick="Game.openMap()" style="display:none">🗺 지도 크게 보기</button>
+      <button class="map-open" id="mapOpenBtn" onclick="Game.openMap()" style="display:none"><i data-lucide="maximize"></i>지도 크게 보기</button>
     </div>
     <div class="sect">
       <h4>인벤토리 <span class="ct" id="invCt">0</span>
-        <button class="inv-combine-btn" id="combineBtn" onclick="Game.toggleCombine()">🔧 조합</button>
+        <button class="inv-combine-btn" id="combineBtn" onclick="Game.toggleCombine()"><i data-lucide="wrench"></i>조합</button>
       </h4>
       <div class="inv-grid" id="invGrid"><span class="inv-empty">아직 아이템이 없습니다</span></div>
       <div class="combine-bar" id="combineBar" style="display:none">
@@ -780,10 +788,10 @@
         </div>
       </div>
       <div class="detail-box" id="detailBox" style="display:none">
-        <button class="item-drop" id="dropBtn" onclick="Game.dropSelectedItem()" title="버리기" aria-label="버리기" style="display:none">🗑</button>
+        <button class="item-drop" id="dropBtn" onclick="Game.dropSelectedItem()" title="버리기" aria-label="버리기" style="display:none"><i data-lucide="trash-2"></i></button>
         <div class="detail-out" id="detailOut"></div>
         <div class="item-actions" id="itemActions" style="display:none">
-          <button class="item-use" id="useBtn" onclick="Game.useSelectedItem()">🔑 사용하기</button>
+          <button class="item-use" id="useBtn" onclick="Game.useSelectedItem()"><i data-lucide="key"></i>사용하기</button>
         </div>
         <input id="detailInput" type="hidden">
       </div>
@@ -803,7 +811,7 @@
       <h4>현재 시점</h4>
       <div class="vp-box">
         <div class="vp-now">시점 · <b id="vpName">렉스터 벨킨</b></div>
-        <button class="vp-switch" onclick="Game.toggleViewpoint()">시점 전환 ⇄</button>
+        <button class="vp-switch" onclick="Game.toggleViewpoint()"><i data-lucide="arrow-left-right"></i>시점 전환</button>
       </div>
       <div class="inv-tip">두 형사는 서로 다른 곳에 있습니다. <b>시점 전환</b>으로 시점을 바꾸면, 같은 키워드라도 그 인물이 본 상황이 나타납니다.</div>
     </div>
@@ -814,7 +822,7 @@
     <div class="sect" id="endSect" style="display:none">
       <h4>엔딩 리스트 <span class="ct" id="endCt">0 / 6</span></h4>
       <div id="endList"></div>
-      <button class="true-end-btn" id="trueEndBtn" style="display:none" onclick="Game.openTrueEnding()">🔓 진짜 엔딩 열기</button>
+      <button class="true-end-btn" id="trueEndBtn" style="display:none" onclick="Game.openTrueEnding()"><i data-lucide="lock-open"></i>진짜 엔딩 열기</button>
     </div>
   </aside>
 </section>
@@ -992,6 +1000,9 @@ const JEBO_ALIAS = {
   '긴 머리':'긴 머리가 기억이 납니다.',
   '모름':'모릅니다.','모릅니다':'모릅니다.'
 };
+// Lucide 아이콘 헬퍼 (JS에서 아이콘 삽입용)
+const IC = (n)=>'<i data-lucide="'+n+'"></i>';
+function renderIcons(){ if(window.lucide&&window.lucide.createIcons){ try{ window.lucide.createIcons(); }catch(e){} } }
 
 // 한국어 조사(밑줄 키워드 환원용) — 긴 것 먼저. 환원 결과가 실제 키워드일 때만 적용되므로 안전
 const JOSA = ['으로서','으로써','에서도','에서는','에게서','에게는','에게도','이라는','이라고','이라도','한테는','한테도','까지는','부터는','으로는','인지는','이었다','이므로','입니다','으로','에서','에게','한테','까지','부터','조차','마저','처럼','보다','마다','밖에','와의','과의','과는','와는','들이','들은','들을','들과','들의','들도','임을','뿐만','에는','에도','라는','라고','라도','이라','이나','이란','이며','이고','로는','이다','였다','인지','은','는','이','가','을','를','에','의','와','과','도','만','로','께','란','들','뿐','임','인'];
@@ -1145,7 +1156,7 @@ const Game = {
       c.innerHTML='<span class="cno">'+this.esc((meta.no||'').replace('ACT ',''))+'</span>'
         +'<span class="ctit">'+this.esc(meta.title||'')+'</span>'
         +((eTot && unlocked)?'<span class="cend">'+endGot+'/'+eTot+'</span>':'')
-        +'<span class="cmark">'+(cleared?'✓':(unlocked?'':'🔒'))+'</span>';
+        +'<span class="cmark">'+(cleared?IC('check'):(unlocked?'':IC('lock')))+'</span>';
       if(unlocked) c.onclick=()=>this.start(a);
       wrap.appendChild(c);
     });
@@ -1271,7 +1282,7 @@ const Game = {
     // 진짜 엔딩 인터뷰 힌트 (아코디언 — 접힌 상태로 표시, 원하면 펼치기)
     const hint=(typeof JEBO_HINTS!=='undefined') && code && JEBO_HINTS[code];
     if(hint){ const dt=document.createElement('details'); dt.className='hint-acc';
-      const sm=document.createElement('summary'); sm.textContent='💡 힌트 보기'; dt.appendChild(sm);
+      const sm=document.createElement('summary'); sm.innerHTML=IC('lightbulb')+' 힌트 보기'; dt.appendChild(sm);
       const hb=document.createElement('div'); hb.className='hint-body'; hb.textContent=hint.replace(/^💡\s*힌트\s*[—-]\s*/,''); dt.appendChild(hb);
       e.appendChild(dt); }
     scroll.appendChild(e); scroll.scrollTop=scroll.scrollHeight;
@@ -1362,7 +1373,7 @@ const Game = {
       const open=isOpen(r), here=isHere(r);
       const chip=document.createElement('span'); chip.className='map-chip'+(open?'':' locked')+(here?' here':'');
       if(open){ chip.textContent=r.n; chip.onclick=()=>{ if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); } this.lookupKeyword(r.go,false); }; }
-      else { chip.textContent='🔒'; chip.title='아직 해금되지 않은 장소'; }
+      else { chip.innerHTML=IC('lock'); chip.title='아직 해금되지 않은 장소'; }
       node.appendChild(chip);
       const kids=kidsOf(r.n);
       if(kids.length){ const kbox=document.createElement('div'); kbox.className='hkids';
@@ -1462,7 +1473,7 @@ const Game = {
   loadEasy(){ try{ const v=localStorage.getItem('excel_easy'); this.easyMode=(v===null?true:v==='1'); }catch(e){ this.easyMode=true; } this.updateEzBtn(); },
   toggleEasy(){ this.easyMode=!this.easyMode; try{ localStorage.setItem('excel_easy',this.easyMode?'1':'0'); }catch(e){} this.updateEzBtn();
     this.toast('쉬운 입력 모드 '+(this.easyMode?'켜짐':'꺼짐')); },
-  updateEzBtn(){ const b=document.getElementById('ezToggle'); if(b){ b.textContent='✨ 쉬운입력 '+(this.easyMode?'ON':'OFF'); b.classList.toggle('on',this.easyMode); } },
+  updateEzBtn(){ const b=document.getElementById('ezToggle'); if(b){ b.innerHTML=IC('sparkles')+' 쉬운입력 '+(this.easyMode?'ON':'OFF'); b.classList.toggle('on',this.easyMode); } },
   toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
     t.textContent=msg; t.classList.add('show'); clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'),1700); },
   // 탭 좌표에서 단어 추출 (쉬운 입력 모드)
@@ -1537,11 +1548,11 @@ const Game = {
   codeButton(s){
     let im=s.match(/아이템\s*코드\s*[:：]\s*(\w+)/);
     if(im){ const c=im[1]; return this.data.items[c]
-      ? '아이템 코드 : <button class="code-btn item'+(this.inv[c]?' got':'')+'" data-type="item" data-code="'+c+'">'+c+(this.inv[c]?' ✓':' ⊕ 획득')+'</button>'
+      ? '아이템 코드 : <button class="code-btn item'+(this.inv[c]?' got':'')+'" data-type="item" data-code="'+c+'">'+c+(this.inv[c]?' '+IC('check'):' '+IC('plus')+' 획득')+'</button>'
       : this.esc(s); }
     let sm=s.match(/시트\s*코드\s*[:：]\s*(\w+)/);
     if(sm){ const c=sm[1]; return (this.data.sheets&&this.data.sheets[c])
-      ? '시트 코드 : <button class="code-btn sheet" data-type="sheet" data-code="'+c+'">'+c+' ▤ 열기</button>'
+      ? '시트 코드 : <button class="code-btn sheet" data-type="sheet" data-code="'+c+'">'+c+' '+IC('file-text')+' 열기</button>'
       : this.esc(s); }
     return this.esc(s);
   },
@@ -2072,7 +2083,7 @@ const Game = {
     const scroll=document.getElementById('scroll');
     const e=document.createElement('div'); e.className='entry';
     if(opt.place){ const loc=document.createElement('div'); loc.className='loc-banner';
-      loc.innerHTML='📍 <b>'+this.esc(opt.place)+'</b> 으로 이동'; e.appendChild(loc); }
+      loc.innerHTML=IC('map-pin')+' <b>'+this.esc(opt.place)+'</b> 으로 이동'; e.appendChild(loc); }
     if(echoKw){ const y=document.createElement('div'); y.className='you';
       y.innerHTML='입력 &rsaquo; <b>'+this.esc(echoKw)+'</b>'; e.appendChild(y); }
 
@@ -2231,13 +2242,13 @@ const Game = {
       const c=document.createElement('div'); c.className='choices';
       choices.forEach(ch=>{
         const b=document.createElement('div');
-        if(/^ctrl\+z$/i.test(ch)){ b.className='chip back'; b.textContent='↩ 돌아가기'; b.onclick=()=>this.undo(); }
+        if(/^ctrl\+z$/i.test(ch)){ b.className='chip back'; b.innerHTML=IC('corner-up-left')+' 돌아가기'; b.onclick=()=>this.undo(); }
         else if(ch==='?'){ hasHidden=true; b.className='chip hidden'; b.textContent='?';
           b.title='숨겨진 키워드 — 아래 입력창에 직접 입력하세요'; b.onclick=()=>this.focusInput(); }
-        else if(isDeathEnding){ b.className='chip retry-chip'; b.textContent='↩ 다시 시도하기'; b.onclick=()=>this.lookupKeyword(ch,false); }
-        else if(/^힌트/.test(ch)){ b.className='chip hint-chip'; b.textContent='💡 '+ch; b.onclick=()=>this.lookupKeyword(ch,false); }
-        else if(/^정답/.test(ch)){ b.className='chip answer-chip'; b.textContent='🔑 '+ch+' 보기'; b.onclick=()=>this.lookupKeyword(ch,false); }
-        else if(/기$/.test(ch)){ b.className='chip action-chip'; b.textContent='▸ '+ch; b.onclick=()=>this.lookupKeyword(ch,false); }
+        else if(isDeathEnding){ b.className='chip retry-chip'; b.innerHTML=IC('rotate-ccw')+' 다시 시도하기'; b.onclick=()=>this.lookupKeyword(ch,false); }
+        else if(/^힌트/.test(ch)){ b.className='chip hint-chip'; b.innerHTML=IC('lightbulb')+' '+this.esc(ch); b.onclick=()=>this.lookupKeyword(ch,false); }
+        else if(/^정답/.test(ch)){ b.className='chip answer-chip'; b.innerHTML=IC('key')+' '+this.esc(ch)+' 보기'; b.onclick=()=>this.lookupKeyword(ch,false); }
+        else if(/기$/.test(ch)){ b.className='chip action-chip'; b.innerHTML=IC('chevron-right')+' '+this.esc(ch); b.onclick=()=>this.lookupKeyword(ch,false); }
         else { const rl=this.choiceLabel(ch); b.className='chip'; b.textContent=rl||ch; b.onclick=()=>this.lookupKeyword(ch,false); }
         c.appendChild(b);
       });
@@ -2422,7 +2433,7 @@ const Game = {
     const it=this.data.items[code]; if(!it) return;
     const fresh=!this.inv[code];
     if(fresh){ this.addItem(code); this.flashItem(code); }
-    if(btn){ btn.classList.add('got'); btn.textContent=code+' ✓'; }
+    if(btn){ btn.classList.add('got'); btn.innerHTML=this.esc(code)+' '+IC('check'); }
     document.getElementById('detailInput').value=code; this.detailLookup();
     const out=document.getElementById('detailOut');
     out.className='detail-out '+(fresh?'ok':'');
@@ -2586,8 +2597,14 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   // 저장이 있으면 새로고침 시 메뉴를 거치지 않고 바로 이어서 (진행이 사라진 것처럼 보이지 않도록)
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
+// Lucide 아이콘 변환: 최초 1회 + DOM 변경 때마다(디바운스) <i data-lucide> → <svg>
+renderIcons();
+(function(){ let raf=null; const run=()=>{ if(raf)return; raf=requestAnimationFrame(function(){ raf=null; renderIcons(); }); };
+  try{ new MutationObserver(run).observe(document.body,{childList:true,subtree:true}); }catch(e){}
+  if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
+})();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v64';
+var APP_VERSION='v65';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
