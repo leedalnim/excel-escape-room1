@@ -205,6 +205,13 @@
   .dlg-row.det .dlg-bubble{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-top-left-radius:4px}
   .dlg-row.me .dlg-bubble{background:rgba(90,125,154,.2);border:1px solid var(--blue);color:#dcecf7;border-top-right-radius:4px}
   .dlg-narr{max-width:680px;margin:8px auto;text-align:center;color:var(--ink-dim);font-size:13px;white-space:pre-wrap;font-style:italic}
+  .hint-acc{max-width:680px;margin:8px auto 0}
+  .hint-acc summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--gold);list-style:none;
+    display:inline-block;padding:4px 0;letter-spacing:.04em;opacity:.85}
+  .hint-acc summary::-webkit-details-marker{display:none}
+  .hint-acc summary:hover{opacity:1}
+  .hint-acc[open] summary{opacity:1;margin-bottom:4px}
+  .hint-body{font-size:13px;color:#cdbb86;line-height:1.65;border-left:2px solid var(--gold);padding:4px 0 4px 12px}
   @keyframes inpulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.55)}70%{box-shadow:0 0 0 9px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
   .composer input.pulse{animation:inpulse 1s ease 2;border-color:var(--accent)!important}
   .choices .chip.back{color:var(--blue);background:transparent;border-color:var(--blue)}
@@ -972,6 +979,19 @@ const JEBO_HINTS = {
   '베릴륨이라는 독이었습니다.':'💡 힌트 — 특징: 방심 엔딩에서 들어온 여자의 머리 모양입니다.',
   '긴 머리가 기억이 납니다.':'💡 힌트 — 범인의 정체(얼굴)는 아직 밝혀지지 않았습니다.'
 };
+// 제보 인터뷰 짧은 정답 허용: "렉스터 벨킨" → "저는 렉스터 벨킨입니다." (긴 문장도 그대로 인식)
+const JEBO_ALIAS = {
+  '렉스터 벨킨':'저는 렉스터 벨킨입니다.',
+  '아가사 페리':'범인은 아가사 페리입니다.',
+  '멜사 도지':'멜사 도지라는 사람입니다.',
+  '조수':'조수인 것 같습니다.',
+  '아가페 리사':'아가페 리사라는 이름을 사용했습니다.',
+  '주민등록증':'주민등록증을 발견했습니다.',
+  '손수건':'손수건입니다.',
+  '베릴륨':'베릴륨이라는 독이었습니다.',
+  '긴 머리':'긴 머리가 기억이 납니다.',
+  '모름':'모릅니다.','모릅니다':'모릅니다.'
+};
 
 // 한국어 조사(밑줄 키워드 환원용) — 긴 것 먼저. 환원 결과가 실제 키워드일 때만 적용되므로 안전
 const JOSA = ['으로서','으로써','에서도','에서는','에게서','에게는','에게도','이라는','이라고','이라도','한테는','한테도','까지는','부터는','으로는','인지는','이었다','이므로','입니다','으로','에서','에게','한테','까지','부터','조차','마저','처럼','보다','마다','밖에','와의','과의','과는','와는','들이','들은','들을','들과','들의','들도','임을','뿐만','에는','에도','라는','라고','라도','이라','이나','이란','이며','이고','로는','이다','였다','인지','은','는','이','가','을','를','에','의','와','과','도','만','로','께','란','들','뿐','임','인'];
@@ -1175,6 +1195,9 @@ const Game = {
       // 패시지가 아니면 아이템/대사(제보 인터뷰 등)에서 찾아 처리 — 공백·끝 마침표 차이는 무시하고 매칭
       if(this.data.items){
         const nrm=s=>String(s).replace(/\s+/g,'').replace(/[.。!?]+$/,'');
+        // 제보 인터뷰 짧은 정답 허용 ("렉스터 벨킨" → 정식 대사)
+        if(typeof JEBO_ALIAS!=='undefined'){ const nk=nrm(kw);
+          for(const a in JEBO_ALIAS){ if(nrm(a)===nk && this.data.items[JEBO_ALIAS[a]]){ this.handleItemKeyword(JEBO_ALIAS[a], silent?null:kw); return; } } }
         let ik = this.data.items[kw] ? kw : (this.data.items[kw.replace(/\s+/g,'')] ? kw.replace(/\s+/g,'') : null);
         if(!ik){ const nk=nrm(kw); if(nk) for(const c in this.data.items){ if(nrm(c)===nk){ ik=c; break; } } }
         if(ik){ this.handleItemKeyword(ik, silent?null:kw); return; }
@@ -1210,8 +1233,9 @@ const Game = {
       const t=raw.trim();
       if(/^[-–—]/.test(t)){ cur={who:'det', parts:[t.replace(/^[-–—]\s*/,'')]}; turns.push(cur); }
       else if(/^["“]/.test(t)){ cur={who:'me', parts:[t]}; turns.push(cur); }
+      else if(/^\(/.test(t)){ turns.push({who:'narr', parts:[t]}); cur=null; }  // (저는 ?입니다.) 같은 형식 힌트 → 말풍선 밖
       else if(cur){ cur.parts.push(t); }
-      else if(t){ cur={who:'narr', parts:[t]}; turns.push(cur); }
+      else if(t){ turns.push({who:'narr', parts:[t]}); cur=null; }
     });
     let out='';
     turns.forEach(tn=>{
@@ -1244,9 +1268,12 @@ const Game = {
       const nd=document.createElement('div'); nd.className='notice-line';
       nd.textContent=this.uiText?this.uiText('※ '+n):('※ '+n); e.appendChild(nd);
     });
-    // 진짜 엔딩 인터뷰 힌트
+    // 진짜 엔딩 인터뷰 힌트 (아코디언 — 접힌 상태로 표시, 원하면 펼치기)
     const hint=(typeof JEBO_HINTS!=='undefined') && code && JEBO_HINTS[code];
-    if(hint){ const hd=document.createElement('div'); hd.className='notice-line'; hd.style.color='#cdbb86'; hd.textContent=hint; e.appendChild(hd); }
+    if(hint){ const dt=document.createElement('details'); dt.className='hint-acc';
+      const sm=document.createElement('summary'); sm.textContent='💡 힌트 보기'; dt.appendChild(sm);
+      const hb=document.createElement('div'); hb.className='hint-body'; hb.textContent=hint.replace(/^💡\s*힌트\s*[—-]\s*/,''); dt.appendChild(hb);
+      e.appendChild(dt); }
     scroll.appendChild(e); scroll.scrollTop=scroll.scrollHeight;
   },
 
@@ -2547,7 +2574,10 @@ function relabelData(o){
     .replace(/진짜 엔딩을 진행하시려면 총 6개의 엔딩 코드를 더한 값을\s*키워드 코드에 입력하셔야 합니다\./g,'6개의 엔딩을 모두 모으면, 가방의 "엔딩 리스트"에 "진짜 엔딩 열기" 버튼이 자동으로 나타납니다.')
     .replace(/6개의 일반 엔딩을 보기 위해 처음부터 다시 시작하시려면\s*키워드 코드에 "재시작"을 입력하세요\./g,'다른 엔딩을 보려면 "이 화 다시" 버튼을 누르세요. (지금까지 모은 엔딩은 유지됩니다.)')
     .replace(/이후 진행은 "인벤토리" 내의 상세 설명 칸에\s*키워드를 입력해서 진행하게 됩니다\./g,'이후 진행은 아래 키워드 입력창에 키워드를 입력하여 진행합니다.')
-    .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.');
+    .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.')
+    // 제보 인터뷰 형식 안내 → 짧은 정답 허용 안내로
+    .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'(정답만 입력해도 됩니다 — 예: 렉스터 벨킨)')
+    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'');
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
@@ -2557,7 +2587,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v62';
+var APP_VERSION='v64';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
