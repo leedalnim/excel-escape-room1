@@ -195,6 +195,16 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .notice-line{max-width:680px;margin:12px auto 0;font-size:13px;color:#a3a6b4;
     white-space:pre-wrap;border-left:2px solid var(--line);padding-left:14px;line-height:1.65}
+  /* 제보 인터뷰 말풍선 */
+  .dlg-row{display:flex;margin:10px auto;max-width:680px}
+  .dlg-row.me{justify-content:flex-end}
+  .dlg-wrap{max-width:80%}
+  .dlg-name{font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin:0 6px 3px;letter-spacing:.04em}
+  .dlg-row.me .dlg-name{text-align:right}
+  .dlg-bubble{padding:10px 14px;border-radius:15px;font-size:14px;line-height:1.65;font-family:var(--body)}
+  .dlg-row.det .dlg-bubble{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-top-left-radius:4px}
+  .dlg-row.me .dlg-bubble{background:rgba(90,125,154,.2);border:1px solid var(--blue);color:#dcecf7;border-top-right-radius:4px}
+  .dlg-narr{max-width:680px;margin:8px auto;text-align:center;color:var(--ink-dim);font-size:13px;white-space:pre-wrap;font-style:italic}
   @keyframes inpulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.55)}70%{box-shadow:0 0 0 9px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
   .composer input.pulse{animation:inpulse 1s ease 2;border-color:var(--accent)!important}
   .choices .chip.back{color:var(--blue);background:transparent;border-color:var(--blue)}
@@ -1193,15 +1203,41 @@ const Game = {
     }
     this.autoSave();
   },
+  // 제보 인터뷰 대사를 카톡식 말풍선으로: "..." = 나(벨킨, 오른쪽), - ... = 형사(왼쪽)
+  renderDialogue(text){
+    const turns=[]; let cur=null;
+    String(text).split('\n').forEach(raw=>{
+      const t=raw.trim();
+      if(/^[-–—]/.test(t)){ cur={who:'det', parts:[t.replace(/^[-–—]\s*/,'')]}; turns.push(cur); }
+      else if(/^["“]/.test(t)){ cur={who:'me', parts:[t]}; turns.push(cur); }
+      else if(cur){ cur.parts.push(t); }
+      else if(t){ cur={who:'narr', parts:[t]}; turns.push(cur); }
+    });
+    let out='';
+    turns.forEach(tn=>{
+      let body=tn.parts.join('\n').replace(/[""“”]/g,'').replace(/\n{2,}/g,'\n').trim();
+      if(!body) return;
+      const safe=this.esc(body).replace(/\n/g,'<br>');
+      if(tn.who==='narr'){ out+='<div class="dlg-narr">'+safe+'</div>'; }
+      else { const nm=tn.who==='det'?'맥 브레튼 형사':'나 (렉스터 벨킨)';
+        out+='<div class="dlg-row '+tn.who+'"><div class="dlg-wrap"><div class="dlg-name">'+nm+'</div><div class="dlg-bubble">'+safe+'</div></div></div>'; }
+    });
+    return out;
+  },
   printItemResponse(echoKw, it, gotItem, code){
     const scroll=document.getElementById('scroll');
     const e=document.createElement('div'); e.className='entry';
     if(echoKw){ const y=document.createElement('div'); y.className='you'; y.innerHTML='입력 &rsaquo; <b>'+this.esc(echoKw)+'</b>'; e.appendChild(y); }
     const segs=String(it.desc).split('※');
-    const head=(it.name && !/^HIDDEN/i.test(it.name))?('['+it.name+']'+(gotItem?' 획득':'')+'\n'):'';
-    const p=document.createElement('div'); p.className='passage';
-    p.innerHTML=this.renderStoryHtml(head+segs[0].trim());
-    e.appendChild(p);
+    const isDialogue = it.name && /^HIDDEN/i.test(it.name);  // 제보 인터뷰 대사 → 말풍선
+    if(isDialogue){
+      e.insertAdjacentHTML('beforeend', this.renderDialogue(segs[0]));
+    } else {
+      const head=(it.name && !/^HIDDEN/i.test(it.name))?('['+it.name+']'+(gotItem?' 획득':'')+'\n'):'';
+      const p=document.createElement('div'); p.className='passage';
+      p.innerHTML=this.renderStoryHtml(head+segs[0].trim());
+      e.appendChild(p);
+    }
     // ※ 안내문은 작은 인용 스타일로
     segs.slice(1).map(s=>s.trim()).filter(Boolean).forEach(n=>{
       if(/콘텐츠\s*사용/.test(n)) return;
@@ -2458,6 +2494,10 @@ const Game = {
   },
   openTrueEnding(){
     const kw=this.trueEndingKw(); if(!kw) return;
+    // 모든 엔딩 클리어 = 모든 단서를 본 것 → 추리에 필요한 핵심 단서(책·주민증·신문)를 인벤토리에 지급
+    const give=(CLUE_ITEMS[this.act]||[]).concat(CARRY_OVER[this.act]||[]);
+    give.forEach(c=>{ if(this.data.items[c] && !this.inv[c]) this.inv[c]=this.data.items[c]; });
+    this.renderInv(); this.autoSave();
     if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); }
     this.lookupKeyword(kw,false);
   },
@@ -2517,7 +2557,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v61';
+var APP_VERSION='v62';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
