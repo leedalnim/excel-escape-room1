@@ -1000,6 +1000,11 @@ const JEBO_ALIAS = {
   '긴 머리':'긴 머리가 기억이 납니다.',
   '모름':'모릅니다.','모릅니다':'모릅니다.'
 };
+// 제보 인터뷰 객관식 버튼: 마지막 질문("아가사 페리에 대하여 아는 것이 있으신가요?")만 버튼 선택
+// 키 = 그 질문을 던지는 아이템 코드, 값 = [[보기, 정답여부(1)],...] (정답은 JEBO_ALIAS로 해석)
+const JEBO_CHOICES = {
+  '긴 머리가 기억이 납니다.': [['모릅니다',1],['직접 봤습니다',0],['사진이 있습니다',0]]
+};
 // Lucide 아이콘 헬퍼 (JS에서 아이콘 삽입용)
 const IC = (n)=>'<i data-lucide="'+n+'"></i>';
 function renderIcons(){ if(window.lucide&&window.lucide.createIcons){ try{ window.lucide.createIcons(); }catch(e){} } }
@@ -1285,6 +1290,15 @@ const Game = {
       const sm=document.createElement('summary'); sm.innerHTML=IC('lightbulb')+' 힌트 보기'; dt.appendChild(sm);
       const hb=document.createElement('div'); hb.className='hint-body'; hb.textContent=hint.replace(/^💡\s*힌트\s*[—-]\s*/,''); dt.appendChild(hb);
       e.appendChild(dt); }
+    // 객관식 정답 버튼 (난해함 완화 — 타이핑 대신 선택)
+    const ch=(typeof JEBO_CHOICES!=='undefined') && code && JEBO_CHOICES[code];
+    if(ch){ const c=document.createElement('div'); c.className='choices';
+      ch.slice().sort(()=>Math.random()-0.5).forEach(([label,ok])=>{
+        const b=document.createElement('div'); b.className='chip'+(ok?'':' answer-chip'); b.textContent=label;
+        b.onclick=ok ? (()=>this.lookupKeyword(label,false)) : (()=>this.toast('단서를 다시 살펴보세요 — 그 답은 아닌 것 같습니다.'));
+        c.appendChild(b);
+      });
+      e.appendChild(c); }
     scroll.appendChild(e); scroll.scrollTop=scroll.scrollHeight;
   },
 
@@ -2604,7 +2618,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v66';
+var APP_VERSION='v67';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
