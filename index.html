@@ -1147,6 +1147,9 @@ const Game = {
     if(passage===null){
       // sheet code? show the reference material instead of an error
       if(this.data.sheets && (this.data.sheets[kw]||this.data.sheets[kw.replace(/\s+/g,'')])){ this.openSheet(this.data.sheets[kw]?kw:kw.replace(/\s+/g,'')); return; }
+      // 패시지가 아니면 아이템/대사(제보 인터뷰 등)에서 찾아 처리 — 입력은 메인 키워드창 사용
+      const ik = this.data.items&&(this.data.items[kw]?kw:(this.data.items[kw.replace(/\s+/g,'')]?kw.replace(/\s+/g,''):null));
+      if(ik){ this.handleItemKeyword(ik, silent?null:kw); return; }
       this.printEntry(silent?null:kw, '입력하신 키워드를 찾을 수 없습니다. 지문을 다시 살펴보거나, 다른 키워드를 시도해보세요.', {bad:true});
       return;
     }
@@ -1156,6 +1159,29 @@ const Game = {
     if(this.seenKw) this.seenKw.add(kw);   // 전체 지도 해금 추적
     this.applyPassage(silent?null:kw, passage);
     this.autoSave();
+  },
+  // 아이템/대사 키워드 처리 (제보 인터뷰 등) — 메인 입력창으로 진행
+  handleItemKeyword(code, echoKw){
+    const it=this.data.items[code]; if(!it) return;
+    const isNumItem = /^\d+$/.test(code) && it.name && !/^HIDDEN/i.test(it.name);
+    const wasNew = isNumItem && !this.inv[code];
+    if(wasNew){ this.addItem(code); this.flashItem(code); }
+    this.printItemResponse(echoKw, it, wasNew);
+    this.lastKw=code; if(this.seenKw) this.seenKw.add(code);
+    if(/에서\s*계속|to be continued/i.test(it.desc)){
+      const sc=document.getElementById('scroll'); const e=document.createElement('div'); e.className='entry';
+      this.nextActPrompt(e); if(e.children.length){ sc.appendChild(e); sc.scrollTop=sc.scrollHeight; }
+    }
+    this.autoSave();
+  },
+  printItemResponse(echoKw, it, gotItem){
+    const scroll=document.getElementById('scroll');
+    const e=document.createElement('div'); e.className='entry';
+    if(echoKw){ const y=document.createElement('div'); y.className='you'; y.innerHTML='입력 &rsaquo; <b>'+this.esc(echoKw)+'</b>'; e.appendChild(y); }
+    const p=document.createElement('div'); p.className='passage';
+    const head=(it.name && !/^HIDDEN/i.test(it.name))?('['+it.name+']'+(gotItem?' 획득':'')+'\n'):'';
+    p.innerHTML=this.renderStoryHtml(head+it.desc);
+    e.appendChild(p); scroll.appendChild(e); scroll.scrollTop=scroll.scrollHeight;
   },
 
   applyPassage(echoKw, text){
@@ -2444,7 +2470,11 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.q
 Game.loadEasy();
 // 낯선 단어 일괄 치환 (게시판·힌트·정답 등 표시 텍스트)
 function relabelData(o){
-  if(typeof o==='string') return o.replace(/미씽/g,'걸레질').replace(/싸이코패스/g,'사이코패스');
+  if(typeof o==='string') return o.replace(/미씽/g,'걸레질').replace(/싸이코패스/g,'사이코패스')
+    .replace(/진짜 엔딩을 진행하시려면 총 6개의 엔딩 코드를 더한 값을\s*키워드 코드에 입력하셔야 합니다\./g,'6개의 엔딩을 모두 모으면, 가방의 "엔딩 리스트"에 "진짜 엔딩 열기" 버튼이 자동으로 나타납니다.')
+    .replace(/6개의 일반 엔딩을 보기 위해 처음부터 다시 시작하시려면\s*키워드 코드에 "재시작"을 입력하세요\./g,'다른 엔딩을 보려면 "이 화 다시" 버튼을 누르세요. (지금까지 모은 엔딩은 유지됩니다.)')
+    .replace(/이후 진행은 "인벤토리" 내의 상세 설명 칸에\s*키워드를 입력해서 진행하게 됩니다\./g,'이후 진행은 아래 키워드 입력창에 키워드를 입력하여 진행합니다.')
+    .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.');
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
@@ -2454,7 +2484,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v57';
+var APP_VERSION='v58';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
