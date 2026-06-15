@@ -944,8 +944,24 @@ const ACT_ROOMS = {
   ]
 };
 
-// 다음 액트로 이어받을(두 액트 모두 의미 있는) 아이템 코드만. 8463=켜진 MP3, 169=작은방 열쇠
-const CARRY_OVER = { act2:['8463','169'] };
+// Act1→Act2 기본 지급(항상 보유). 8463=켜진 MP3, 169=작은방 열쇠, 3426=신문(범인 '아가사 페리' 단서 — 진짜 엔딩용)
+const CARRY_OVER = { act2:['8463','169','3426'] };
+// 한 번 발견하면 이 화 다시 후에도 인벤토리에 유지되는 핵심 단서 아이템 (진짜 엔딩 추리용)
+// 777=파란 책(렉스터 벨킨), 666=초록 책(멜사 도지·베릴륨), 446=주민증1(멜사 도지), 441=주민증2(아가페 리사)
+const CLUE_ITEMS = { act2:['777','666','446','441'] };
+// 진짜 엔딩(제보 인터뷰) 질문별 힌트 — 키는 "그 질문을 던지는" 아이템 코드
+const JEBO_HINTS = {
+  '제보':'💡 힌트 — 성함: 당신이 쓴 책 "전 세기의 연쇄살인마들"의 저자명입니다. (파란 책)',
+  '저는 렉스터 벨킨입니다.':'💡 힌트 — 범인: 신문 기사 속 "비밀"이라는 공포소설을 쓴 작가입니다.',
+  '범인은 아가사 페리입니다.':'💡 힌트 — "치명독의 종류"라는 책을 쓴 사람입니다. (초록 책)',
+  '멜사 도지라는 사람입니다.':'💡 힌트 — 멜사 도지와 아가사 페리의 관계를 떠올려보세요.',
+  '조수인 것 같습니다.':'💡 힌트 — 주민등록증 2에 적혀 있던 이름입니다.',
+  '아가페 리사라는 이름을 사용했습니다.':'💡 힌트 — 어떻게 알았나: 저택에서 발견한 신분 증명 서류입니다.',
+  '주민등록증을 발견했습니다.':'💡 힌트 — 살해 방식: 무모함·부주의 엔딩에서 코와 입을 덮친 물건입니다.',
+  '손수건입니다.':'💡 힌트 — 독: 초록 책(치명독)에 나오는, 달달한 향이 나는 독입니다.',
+  '베릴륨이라는 독이었습니다.':'💡 힌트 — 특징: 방심 엔딩에서 들어온 여자의 머리 모양입니다.',
+  '긴 머리가 기억이 납니다.':'💡 힌트 — 범인의 정체(얼굴)는 아직 밝혀지지 않았습니다.'
+};
 
 // 한국어 조사(밑줄 키워드 환원용) — 긴 것 먼저. 환원 결과가 실제 키워드일 때만 적용되므로 안전
 const JOSA = ['으로서','으로써','에서도','에서는','에게서','에게는','에게도','이라는','이라고','이라도','한테는','한테도','까지는','부터는','으로는','인지는','이었다','이므로','입니다','으로','에서','에게','한테','까지','부터','조차','마저','처럼','보다','마다','밖에','와의','과의','과는','와는','들이','들은','들을','들과','들의','들도','임을','뿐만','에는','에도','라는','라고','라도','이라','이나','이란','이며','이고','로는','이다','였다','인지','은','는','이','가','을','를','에','의','와','과','도','만','로','께','란','들','뿐','임','인'];
@@ -987,6 +1003,8 @@ const Game = {
     // (캐리오버 저장 유무·이 화 다시·코드 진입과 무관하게 보장 — 진행 막힘 방지)
     const allow=CARRY_OVER[key];
     if(allow){ allow.forEach(c=>{ if(this.data.items[c] && !this.inv[c]) this.inv[c]=this.data.items[c]; }); }
+    // 이미 발견한 핵심 단서 아이템 복원 (이 화 다시 후에도 인터뷰 추리용으로 유지)
+    if(CLUE_ITEMS[key]){ try{ JSON.parse(localStorage.getItem('excel_escape_clues_'+key)||'[]').forEach(c=>{ if(this.data.items[c] && !this.inv[c]) this.inv[c]=this.data.items[c]; }); }catch(e){} }
     this.renderInv(); this.renderEndings(); this.renderPlaces(); this.renderSheets(); this.renderViewpoint(); this.renderSituations();
     document.getElementById('notepad').value=this.notes||'';
     this.lookupKeyword(resume&&resume.lastKw?resume.lastKw:'시작', true);
@@ -1072,7 +1090,7 @@ const Game = {
     if(this.hasSave() && !confirm('처음부터 다시 시작할까요?\n저장된 진행과 챕터 해금 기록이 초기화됩니다.')) return;
     try{ localStorage.removeItem('excel_escape_progress'); localStorage.removeItem('excel_escape_carry');
       localStorage.removeItem('excel_escape_save');
-      ACT_ORDER.forEach(a=>localStorage.removeItem('excel_escape_act_'+a));
+      ACT_ORDER.forEach(a=>{ localStorage.removeItem('excel_escape_act_'+a); localStorage.removeItem('excel_escape_clues_'+a); });
     }catch(e){}
     this.cleared=[];
     this.start(ACT_ORDER[0]);
@@ -1167,7 +1185,7 @@ const Game = {
     const isNumItem = /^\d+$/.test(code) && it.name && !/^HIDDEN/i.test(it.name);
     const wasNew = isNumItem && !this.inv[code];
     if(wasNew){ this.addItem(code); this.flashItem(code); }
-    this.printItemResponse(echoKw, it, wasNew);
+    this.printItemResponse(echoKw, it, wasNew, code);
     this.lastKw=code; if(this.seenKw) this.seenKw.add(code);
     if(/에서\s*계속|to be continued/i.test(it.desc)){
       const sc=document.getElementById('scroll'); const e=document.createElement('div'); e.className='entry';
@@ -1175,14 +1193,25 @@ const Game = {
     }
     this.autoSave();
   },
-  printItemResponse(echoKw, it, gotItem){
+  printItemResponse(echoKw, it, gotItem, code){
     const scroll=document.getElementById('scroll');
     const e=document.createElement('div'); e.className='entry';
     if(echoKw){ const y=document.createElement('div'); y.className='you'; y.innerHTML='입력 &rsaquo; <b>'+this.esc(echoKw)+'</b>'; e.appendChild(y); }
-    const p=document.createElement('div'); p.className='passage';
+    const segs=String(it.desc).split('※');
     const head=(it.name && !/^HIDDEN/i.test(it.name))?('['+it.name+']'+(gotItem?' 획득':'')+'\n'):'';
-    p.innerHTML=this.renderStoryHtml(head+it.desc);
-    e.appendChild(p); scroll.appendChild(e); scroll.scrollTop=scroll.scrollHeight;
+    const p=document.createElement('div'); p.className='passage';
+    p.innerHTML=this.renderStoryHtml(head+segs[0].trim());
+    e.appendChild(p);
+    // ※ 안내문은 작은 인용 스타일로
+    segs.slice(1).map(s=>s.trim()).filter(Boolean).forEach(n=>{
+      if(/콘텐츠\s*사용/.test(n)) return;
+      const nd=document.createElement('div'); nd.className='notice-line';
+      nd.textContent=this.uiText?this.uiText('※ '+n):('※ '+n); e.appendChild(nd);
+    });
+    // 진짜 엔딩 인터뷰 힌트
+    const hint=(typeof JEBO_HINTS!=='undefined') && code && JEBO_HINTS[code];
+    if(hint){ const hd=document.createElement('div'); hd.className='notice-line'; hd.style.color='#cdbb86'; hd.textContent=hint; e.appendChild(hd); }
+    scroll.appendChild(e); scroll.scrollTop=scroll.scrollHeight;
   },
 
   applyPassage(echoKw, text){
@@ -2262,7 +2291,10 @@ const Game = {
   },
 
   addItem(code){ const it=this.data.items[code]; if(!it) return;
-    this.inv[code]=it; this.renderInv(); this.autoSave(); },
+    this.inv[code]=it;
+    // 핵심 단서면 발견 기록 저장 (이 화 다시 후에도 복원해 재확인 가능)
+    try{ const cl=CLUE_ITEMS[this.act]; if(cl && cl.indexOf(code)>=0){ const ck='excel_escape_clues_'+this.act; const a=JSON.parse(localStorage.getItem(ck)||'[]'); if(a.indexOf(code)<0){ a.push(code); localStorage.setItem(ck, JSON.stringify(a)); } } }catch(e){}
+    this.renderInv(); this.autoSave(); },
   renderInv(){
     const g=document.getElementById('invGrid'); const codes=Object.keys(this.inv);
     document.getElementById('invCt').textContent=codes.length;
@@ -2485,7 +2517,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v60';
+var APP_VERSION='v61';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
