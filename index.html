@@ -358,6 +358,15 @@
   .sheet-scroll::-webkit-scrollbar{height:8px;width:8px}.sheet-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:8px}
   .sheet-tbl{border-collapse:collapse;margin:0 auto;background:#fff;color:#111;font-family:var(--mono);font-size:12px}
   .sheet-tbl td{border:1px solid #d4d4d4;padding:3px 6px;min-width:16px;line-height:1.4;white-space:nowrap}
+  /* 빈 칸·색칠 칸의 격자선 제거 → 색 픽셀 그림(단서)이 또렷하게 */
+  .sheet-tbl td:empty{border-color:transparent}
+  /* 시트 도구(힌트·돌려보기) */
+  .sheet-tools{display:flex;flex-direction:column;gap:8px;align-items:stretch;margin-top:4px}
+  .sheet-hint{background:#fff7e0;color:#5b4a2c;border:1px solid #e6d3a3;border-radius:5px;padding:8px 11px;font-size:13px;line-height:1.55;text-align:left}
+  .sheet-rot-btn{align-self:center;background:var(--panel2);border:1px solid var(--blue);color:#bcd8ef;
+    font-family:var(--mono);font-size:12px;padding:7px 16px;border-radius:4px;cursor:pointer}
+  .sheet-rot-btn:hover{background:var(--blue);color:#0b0c10}
+  #sheetBody.rot90{transform:rotate(90deg);transform-origin:center;margin:30px 0}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;gap:10px}
@@ -861,6 +870,7 @@
 <div class="modal" id="sheetModal"><div class="card sheet-card">
   <h3 id="sheetTitle"></h3><div class="ec" id="sheetCode"></div>
   <div class="sheet-scroll"><div id="sheetBody"></div></div>
+  <div class="sheet-tools" id="sheetTools"></div>
   <button onclick="document.getElementById('sheetModal').classList.remove('on')">닫기</button>
 </div></div>
 <div class="modal" id="letterModal"><div class="card letter-card">
@@ -1642,6 +1652,17 @@ const Game = {
     }
     document.getElementById('sheetBody').innerHTML=html;
     if(widget) document.getElementById('sheetBody').appendChild(widget);
+    // 초대장 같은 "색 픽셀 그림" 단서: 힌트 + 90° 돌려보기 도구
+    const sb=document.getElementById('sheetBody'); sb.classList.remove('rot90');
+    const tools=document.getElementById('sheetTools');
+    if(tools){ const isInvite=(s.name==='초대장');
+      tools.innerHTML = isInvite
+        ? '<div class="sheet-hint">💡 왼쪽 <b>색칠된 그림</b>을 화면(또는 고개)을 <b>90° 옆으로 돌려서</b> 보면 7글자 알파벳이 보입니다.</div>'
+          +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌려보기</button>'
+        : '';
+      const rb=document.getElementById('sheetRotBtn');
+      if(rb) rb.onclick=()=>{ const on=sb.classList.toggle('rot90'); rb.textContent=on?'↺ 원래대로':'↻ 90° 돌려보기'; };
+    }
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
     document.getElementById('sheetModal').classList.add('on');
@@ -2635,7 +2656,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v69';
+var APP_VERSION='v70';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
