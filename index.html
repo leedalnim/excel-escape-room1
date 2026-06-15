@@ -379,7 +379,8 @@
   .pamph{text-align:left}
   .pamph p{color:#3a2c14!important}
   .pamph-title{font-family:var(--serif);font-size:18px;text-align:center;margin-bottom:14px;color:#2a1f10}
-  .pamph-sec{background:#f6efdd;border:1px solid #e3d4ab;border-radius:6px;padding:13px 15px;margin-bottom:12px;color:#3a2c14}
+  .pamph{background:#f6efdd;border:1px solid #e3d4ab;border-radius:6px;padding:14px 16px;color:#3a2c14}
+  .pamph-sec{margin-bottom:14px;color:#3a2c14}
   .pamph-h{font-weight:700;color:#7a2b2b;margin-bottom:8px;text-align:center}
   .pamph-sec p{margin:8px 0;font-size:13px;line-height:1.55}
   .pamph-note{font-size:12px;color:#6b5836;margin:4px 0 12px}
@@ -831,8 +832,8 @@
       <div class="inv-tip">아이템 칩을 누르면 설명·<b>사용</b> 버튼이 나옵니다. 여러 아이템을 합치려면 <b>🔧 조합</b>을 누르세요.</div>
     </div>
     <div class="sect" id="sheetSect" style="display:none">
-      <h4>자료 시트 <span class="ct" id="sheetCt">0</span></h4>
-      <div class="inv-grid" id="sheetGrid"><span class="inv-empty">시트 코드를 입력하면 자료가 열립니다</span></div>
+      <h4>자료 <span class="ct" id="sheetCt">0</span></h4>
+      <div class="inv-grid" id="sheetGrid"><span class="inv-empty">발견한 자료가 여기에 모입니다</span></div>
       <div class="inv-tip">단서에서 얻은 <b>시트 코드</b>를 아래 키워드 입력창에 넣으면 자료(초대장·안내도 등)가 열립니다.</div>
     </div>
     <div class="sect" id="situSect" style="display:none">
@@ -1622,7 +1623,7 @@ const Game = {
       : this.esc(s); }
     let sm=s.match(/시트\s*코드\s*[:：]\s*(\w+)/);
     if(sm){ const c=sm[1]; return (this.data.sheets&&this.data.sheets[c])
-      ? '시트 코드 : <button class="code-btn sheet" data-type="sheet" data-code="'+c+'">'+c+' '+IC('file-text')+' 열기</button>'
+      ? '<button class="code-btn sheet" data-type="sheet" data-code="'+c+'">'+IC('file-text')+' '+this.esc((this.data.sheets[c]&&this.data.sheets[c].name)||'자료')+' 보기</button>'
       : this.esc(s); }
     return this.esc(s);
   },
@@ -1709,12 +1710,15 @@ const Game = {
       E:["11111","10000","10000","11110","10000","10000","11111"]
     };
     const word='SCALPEL', pal=['#C80051','#FFC000','#00B0F0','#7030A0','#92D050','#B85C00','#B686DA'];
-    const grid=[];
+    let grid=[];
     for(let r=0;r<7;r++){ const line=[];
       word.split('').forEach((ch,li)=>{ const g=F[ch]||F.L, color=pal[li%pal.length];
         for(let c=0;c<5;c++) line.push(g[r][c]==='1'?color:null); line.push(null); });
       grid.push(line);
     }
+    // 90° 회전 적용 (기본 90° = 옆으로 누워 보임 → 고개/화면 돌려 읽는 퍼즐)
+    let rot=((((this._inviteRot==null?90:this._inviteRot)/90)%4)+4)%4;
+    for(let i=0;i<rot;i++) grid=this._rot90(grid);
     const W=grid[0].length;
     let art='<div class="invite-art" style="grid-template-columns:repeat('+W+',10px)">';
     grid.forEach(line=>line.forEach(col=>{ art+='<span style="background:'+(col||'transparent')+'"></span>'; }));
@@ -1726,8 +1730,8 @@ const Game = {
   openSheet(code){
     const s=this.data.sheets[code]; if(!s) return;
     if(!this.sheetsSeen.includes(code)){ this.sheetsSeen.push(code); this.renderSheets(); this.autoSave(); }
-    document.getElementById('sheetTitle').textContent='시트 '+(s.alpha?s.alpha+' · ':'')+s.name;
-    document.getElementById('sheetCode').textContent='시트 코드 · '+code;
+    document.getElementById('sheetTitle').textContent=s.name;
+    const _sc=document.getElementById('sheetCode'); _sc.textContent=''; _sc.style.display='none';
     const widget=this.sheetWidget(this.act,code);
     let html=s.html||'<p>자료를 불러올 수 없습니다.</p>';
     // 초대장: 넓은 엑셀표 → 색 그림(단서)+텍스트(카드)로 분리해 재구성
@@ -1756,8 +1760,11 @@ const Game = {
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 위 색칠 그림이 <b>입장 키워드(7글자 알파벳)</b>입니다. 대·소문자 구분 없이 입력하면 돼요.</div>'
+        ? '<div class="sheet-hint">💡 위 색칠 그림은 <b>입장 키워드(7글자 알파벳)</b>입니다. 화면(또는 고개)을 90° 돌려서 읽어보세요. (대·소문자 무관)</div>'
+          +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌리기</button>'
         : '';
+      const rb=document.getElementById('sheetRotBtn');
+      if(rb) rb.onclick=()=>{ this._inviteRot=(((this._inviteRot==null?90:this._inviteRot)+90)%360); document.getElementById('sheetBody').innerHTML=this.renderInviteHtml(); };
     }
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
@@ -2144,11 +2151,11 @@ const Game = {
   renderSheets(){
     const g=document.getElementById('sheetGrid'); if(!g) return;
     document.getElementById('sheetCt').textContent=this.sheetsSeen.length;
-    if(!this.sheetsSeen.length){ g.innerHTML='<span class="inv-empty">시트 코드를 입력하면 자료가 열립니다</span>'; return; }
+    if(!this.sheetsSeen.length){ g.innerHTML='<span class="inv-empty">발견한 자료가 여기에 모입니다</span>'; return; }
     g.innerHTML='';
     this.sheetsSeen.forEach(c=>{ const s=this.data.sheets[c]; if(!s) return;
       const d=document.createElement('div'); d.className='sheet-chip';
-      d.innerHTML=(s.alpha?'<b>'+this.esc(s.alpha)+'</b> ':'')+this.esc(s.name)+'<span class="code">'+c+'</span>';
+      d.innerHTML=this.esc(s.name);
       d.onclick=()=>this.openSheet(c); g.appendChild(d); });
   },
   renderSituations(){
@@ -2752,7 +2759,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v74';
+var APP_VERSION='v75';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
