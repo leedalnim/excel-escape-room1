@@ -901,7 +901,7 @@ const ACT_ROOMS = {
   ],
   act2:[
     {n:'서재', p:null,     k:['서재','291'],   go:'서재'},
-    {n:'작은방', p:'서재',  k:['작은방','169'], go:'169'},
+    {n:'작은방', p:'서재',  k:['작은방','169','ad311'], go:'169'},
     {n:'2층 복도', p:'작은방', k:['2층 복도'],  go:'2층 복도'},
     {n:'현관', p:'2층 복도', k:['현관'],         go:'현관'},
     {n:'화장실', p:'현관',  k:['화장실'],         go:'화장실'},
@@ -2344,7 +2344,7 @@ function relabelData(o){
 }
 document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.refreshMenu();}).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v43';
+var APP_VERSION='v44';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
