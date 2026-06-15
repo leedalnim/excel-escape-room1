@@ -366,7 +366,14 @@
   .sheet-rot-btn{align-self:center;background:var(--panel2);border:1px solid var(--blue);color:#bcd8ef;
     font-family:var(--mono);font-size:12px;padding:7px 16px;border-radius:4px;cursor:pointer}
   .sheet-rot-btn:hover{background:var(--blue);color:#0b0c10}
-  #sheetBody.rot90{transform:rotate(90deg);transform-origin:center;margin:30px 0}
+  /* 초대장: 색 픽셀 그림(단서) + 텍스트 카드 */
+  .invite-art{display:grid;grid-auto-rows:8px;gap:0;width:max-content;max-width:100%;margin:4px auto 16px;
+    padding:10px;background:#fff;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2);overflow:auto}
+  .invite-art span{display:block;width:8px;height:8px}
+  .invite-text{color:#3a2c14;font-size:14px;line-height:1.7;text-align:center;padding:0 4px}
+  .invite-text p{margin:5px 0}
+  .invite-text .inv-title{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:12px}
+  .invite-text .inv-sign{margin-top:12px;text-align:right;font-weight:700;font-style:italic}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;gap:10px}
@@ -1627,6 +1634,30 @@ const Game = {
   },
 
   // ----- 시트(자료) 채널 -----
+  // 초대장 엑셀표 파싱 → 색 그림(2D 배열) + 텍스트 줄 분리
+  buildInviteView(html){
+    const rows=String(html).split('<tr>').slice(1).map(r=>
+      [...r.matchAll(/<td([^>]*)>([^<]*)<\/td>/g)].map(m=>({
+        bg:(m[1].match(/background:(#[0-9A-Fa-f]+)/)||[])[1]||null, tx:m[2].trim() })));
+    const texts=[]; rows.forEach(r=>r.forEach(c=>{ if(c.tx) texts.push(c.tx); }));
+    let rMin=1e9,rMax=-1,cMin=1e9,cMax=-1;
+    rows.forEach((r,ri)=>r.forEach((c,ci)=>{ if(c.bg){ if(ri<rMin)rMin=ri; if(ri>rMax)rMax=ri; if(ci<cMin)cMin=ci; if(ci>cMax)cMax=ci; } }));
+    const art=[];
+    for(let ri=rMin;ri<=rMax;ri++){ const row=[]; for(let ci=cMin;ci<=cMax;ci++){ row.push((rows[ri]&&rows[ri][ci]&&rows[ri][ci].bg)||null); } art.push(row); }
+    this._inviteArt=art; this._inviteTexts=texts; this._inviteRot=90;
+  },
+  _rot90(grid){ const H=grid.length,W=grid[0].length,o=[]; for(let c=0;c<W;c++){ const row=[]; for(let r=H-1;r>=0;r--) row.push(grid[r][c]); o.push(row); } return o; },
+  renderInviteHtml(){
+    let art=this._inviteArt||[[null]];
+    for(let i=0;i<(((this._inviteRot||0)/90)%4);i++) art=this._rot90(art);
+    const W=art[0]?art[0].length:1;
+    let g='<div class="invite-art" style="grid-template-columns:repeat('+W+',8px)">';
+    art.forEach(row=>row.forEach(bg=>{ g+='<span style="background:'+(bg||'transparent')+'"></span>'; }));
+    g+='</div>';
+    const t=this._inviteTexts||[];
+    let txt='<div class="invite-text">'+t.map((x,i)=>'<p class="'+(i===0?'inv-title':(i===t.length-1?'inv-sign':''))+'">'+this.esc(x)+'</p>').join('')+'</div>';
+    return g+txt;
+  },
   openSheet(code){
     const s=this.data.sheets[code]; if(!s) return;
     if(!this.sheetsSeen.includes(code)){ this.sheetsSeen.push(code); this.renderSheets(); this.autoSave(); }
@@ -1634,6 +1665,8 @@ const Game = {
     document.getElementById('sheetCode').textContent='시트 코드 · '+code;
     const widget=this.sheetWidget(this.act,code);
     let html=s.html||'<p>자료를 불러올 수 없습니다.</p>';
+    // 초대장: 넓은 엑셀표 → 색 그림(단서)+텍스트(카드)로 분리해 재구성
+    if(s.name==='초대장'){ this.buildInviteView(s.html); html=this.renderInviteHtml(); }
     // 인터랙티브 위젯이 있는 시트는 엑셀 빈칸 격자표가 흉하므로 숨기고 위젯만 노출
     if(widget){
       html = (this.act==='act3' && code==='82')
@@ -1653,15 +1686,14 @@ const Game = {
     document.getElementById('sheetBody').innerHTML=html;
     if(widget) document.getElementById('sheetBody').appendChild(widget);
     // 초대장 같은 "색 픽셀 그림" 단서: 힌트 + 90° 돌려보기 도구
-    const sb=document.getElementById('sheetBody'); sb.classList.remove('rot90');
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 왼쪽 <b>색칠된 그림</b>을 화면(또는 고개)을 <b>90° 옆으로 돌려서</b> 보면 7글자 알파벳이 보입니다.</div>'
-          +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌려보기</button>'
+        ? '<div class="sheet-hint">💡 위의 <b>색칠된 그림</b>은 7글자 알파벳입니다. 글자가 똑바로 보일 때까지 아래 버튼으로 돌려보세요.</div>'
+          +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌리기</button>'
         : '';
       const rb=document.getElementById('sheetRotBtn');
-      if(rb) rb.onclick=()=>{ const on=sb.classList.toggle('rot90'); rb.textContent=on?'↺ 원래대로':'↻ 90° 돌려보기'; };
+      if(rb) rb.onclick=()=>{ this._inviteRot=((this._inviteRot||0)+90)%360; document.getElementById('sheetBody').innerHTML=this.renderInviteHtml(); };
     }
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
@@ -2656,7 +2688,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v70';
+var APP_VERSION='v71';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
