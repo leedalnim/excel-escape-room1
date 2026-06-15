@@ -1144,9 +1144,13 @@ const Game = {
     if(passage===null){
       // sheet code? show the reference material instead of an error
       if(this.data.sheets && (this.data.sheets[kw]||this.data.sheets[kw.replace(/\s+/g,'')])){ this.openSheet(this.data.sheets[kw]?kw:kw.replace(/\s+/g,'')); return; }
-      // 패시지가 아니면 아이템/대사(제보 인터뷰 등)에서 찾아 처리 — 입력은 메인 키워드창 사용
-      const ik = this.data.items&&(this.data.items[kw]?kw:(this.data.items[kw.replace(/\s+/g,'')]?kw.replace(/\s+/g,''):null));
-      if(ik){ this.handleItemKeyword(ik, silent?null:kw); return; }
+      // 패시지가 아니면 아이템/대사(제보 인터뷰 등)에서 찾아 처리 — 공백·끝 마침표 차이는 무시하고 매칭
+      if(this.data.items){
+        const nrm=s=>String(s).replace(/\s+/g,'').replace(/[.。!?]+$/,'');
+        let ik = this.data.items[kw] ? kw : (this.data.items[kw.replace(/\s+/g,'')] ? kw.replace(/\s+/g,'') : null);
+        if(!ik){ const nk=nrm(kw); if(nk) for(const c in this.data.items){ if(nrm(c)===nk){ ik=c; break; } } }
+        if(ik){ this.handleItemKeyword(ik, silent?null:kw); return; }
+      }
       this.printEntry(silent?null:kw, '입력하신 키워드를 찾을 수 없습니다. 지문을 다시 살펴보거나, 다른 키워드를 시도해보세요.', {bad:true});
       return;
     }
@@ -2481,7 +2485,7 @@ document.getElementById("startLabel").textContent="불러오는 중…";loadData
   if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); }
 }).catch(function(e){console.error(e);document.getElementById("startLabel").textContent="로드 실패";});
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v59';
+var APP_VERSION='v60';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
