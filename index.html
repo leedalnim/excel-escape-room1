@@ -1205,6 +1205,9 @@ TEST_JUMPS: [
     this.start(act);
     if(level!=null && level!=='') this.level=parseInt(level,10)||0;
     this.updateStep&&this.updateStep();
+    // 진짜 엔딩으로 점프하는 경우, 정상 플레이처럼 핵심 단서(책·주민증·신문)를 지급
+    const tk=this.trueEndingKw && this.trueEndingKw();
+    if(kw && tk && String(kw)===String(tk)){ this.openTrueEnding(); return; }
     this.lookupKeyword(kw||'시작', false);
   },
   tryJump(){
@@ -2811,7 +2814,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v83';
+var APP_VERSION='v84';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
