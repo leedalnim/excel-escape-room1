@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Episode 1. 비밀 — 웹 방탈출</title>
 <meta name="description" content="브라우저에서 즐기는 텍스트 기반 방탈출 게임">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#13151c">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -2809,7 +2811,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v82';
+var APP_VERSION='v83';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
