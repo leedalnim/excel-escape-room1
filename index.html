@@ -303,8 +303,9 @@
   .code-btn{font-family:var(--mono);font-size:13px;border:1px solid var(--gold);color:var(--gold);
     background:rgba(207,166,78,.08);padding:2px 11px;border-radius:20px;cursor:pointer;transition:.2s;margin:0 2px;display:inline-block}
   .code-btn:hover{background:var(--gold);color:#0b0c10}
-  .code-btn.sheet{border-color:var(--blue);color:var(--blue);background:rgba(90,125,154,.1)}
-  .code-btn.sheet:hover{background:var(--blue);color:#0b0c10}
+  .code-btn.sheet{border:1px solid var(--blue);color:#fff;background:var(--blue);font-weight:700;
+    padding:6px 16px;border-radius:8px;box-shadow:0 2px 9px rgba(90,125,154,.35)}
+  .code-btn.sheet:hover{background:#6f97b8;color:#fff}
   .code-btn.got{border-color:var(--ok);color:var(--ok);background:rgba(106,143,95,.12);cursor:default}
   .code-btn.got:hover{background:rgba(106,143,95,.12);color:var(--ok)}
   .map-kids{margin-left:9px;padding-left:13px;border-left:1px solid var(--line)}
@@ -378,7 +379,9 @@
     font-family:var(--mono);font-size:12px;padding:8px 18px;border-radius:4px;cursor:pointer}
   .sheet-rot-btn:hover{background:#e6c25a}
   /* 초대장: 색 픽셀 그림(단서) + 텍스트 카드 */
-  .invite-wrap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;transform-origin:center;transition:transform .3s ease}
+  /* 회전 시 잘리지 않도록 회전된 외곽 크기를 예약하는 컨테이너 */
+  .invite-rotbox{position:relative;margin:0 auto;display:flex;align-items:center;justify-content:center;transition:width .3s,height .3s}
+  .invite-wrap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;transform-origin:center center;transition:transform .3s ease}
   .invite-art{display:grid;grid-auto-rows:4px;gap:0;width:max-content;flex:0 0 auto;margin:0;
     padding:7px;background:#fff;border-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.2)}
   .invite-art span{display:block;width:4px;height:4px}
@@ -403,6 +406,9 @@
   .pamph-submit{display:block;width:100%;margin-top:10px;background:var(--gold)!important;color:#17140c!important;border:none!important;
     font-weight:700;font-size:15px;padding:11px;border-radius:6px;cursor:pointer}
   .pamph-submit:hover{background:#e6c25a}
+  .pamph-q input.wrong{border-color:#c0392b!important;background:#fdecea!important;box-shadow:0 0 0 2px rgba(192,57,43,.18)!important}
+  .pamph-hint{margin:12px 0 0}
+  .pamph-hint summary{color:#27465f}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;justify-content:center!important;gap:10px;color:var(--gold)!important;font-family:var(--serif)!important;font-size:21px!important}
@@ -1716,21 +1722,31 @@ TEST_JUMPS: [
       +'<p><b>제 3관 : 악마</b><br>나는 사람이 아니라 악마이기 때문에</p></div>'
       +'<div class="pamph-sec"><div class="pamph-h">♠ 경품 응모권 ♠</div>'
       +'<p class="pamph-note">모든 전시관을 관람하고 아래 QUIZ를 푼 뒤, 정답을 칸에 적어 응모하세요.</p>'
-      +'<label class="pamph-q">Q1. "아가페 리사"의 중학생 모습을 그린 작품의 이름은?<input id="raf-q1" autocomplete="off" spellcheck="false" placeholder="정답"></label>'
-      +'<label class="pamph-q">Q2. 오늘 기준 "아가페 리사"의 나이는? (만 나이)<input id="raf-q2" autocomplete="off" spellcheck="false" placeholder="정답"></label>'
-      +'<label class="pamph-q">Q3. 병원에서 벌어졌던 살인사건 피해자의 사망 사인은?<input id="raf-q3" autocomplete="off" spellcheck="false" placeholder="정답"></label>'
-      +'<label class="pamph-q">성함<input id="raf-name" autocomplete="off" spellcheck="false" placeholder="편지 참고"></label>'
-      +'<label class="pamph-q">주소<input id="raf-addr" autocomplete="off" spellcheck="false" placeholder="편지 참고"></label>'
-      +'<button class="pamph-submit" onclick="Game.submitRaffle()">응모하기</button></div>'
+      +'<label class="pamph-q">Q1. "아가페 리사"의 중학생 모습을 그린 작품의 이름은?<input id="raf-q1" autocomplete="off" spellcheck="false" placeholder="정답" oninput="this.classList.remove(\'wrong\')"></label>'
+      +'<label class="pamph-q">Q2. 오늘 기준 "아가페 리사"의 나이는? (만 나이)<input id="raf-q2" autocomplete="off" spellcheck="false" placeholder="정답" oninput="this.classList.remove(\'wrong\')"></label>'
+      +'<label class="pamph-q">Q3. 병원에서 벌어졌던 살인사건 피해자의 사망 사인은?<input id="raf-q3" autocomplete="off" spellcheck="false" placeholder="정답" oninput="this.classList.remove(\'wrong\')"></label>'
+      +'<label class="pamph-q">성함<input id="raf-name" autocomplete="off" spellcheck="false" placeholder="편지 참고" oninput="this.classList.remove(\'wrong\')"></label>'
+      +'<label class="pamph-q">주소<input id="raf-addr" autocomplete="off" spellcheck="false" placeholder="편지 참고" oninput="this.classList.remove(\'wrong\')"></label>'
+      +'<button class="pamph-submit" onclick="Game.submitRaffle()">응모하기</button>'
+      +'<details class="hint-acc pamph-hint"><summary>'+IC('lightbulb')+' 힌트 보기</summary>'
+      +'<div class="hint-body">'
+      +'· Q1 — 1관(본능)에서 그녀의 <b>중학생 시절</b>을 그린 작품의 제목을 찾으세요.<br>'
+      +'· Q2 — 자료에 적힌 <b>출생연도</b>를 오늘 날짜 기준으로 빼서 만 나이를 계산하세요.<br>'
+      +'· Q3 — 2관·병원 사건 자료에서 피해자의 <b>사망 원인(사인)</b>을 확인하세요.<br>'
+      +'· 성함·주소 — 받은 <b>편지(초대장)</b> 끝부분에 적힌 수신인 정보를 그대로 옮겨 적으세요.'
+      +'</div></details>'
+      +'</div>'
       +'</div>';
   },
   submitRaffle(){
-    const get=id=>{ const el=document.getElementById(id); return el?(el.value||'').trim():''; };
     const nrm=s=>String(s).replace(/[\s,.\-·]/g,'').toLowerCase();
-    const ans={q1:'소원',q2:'36',q3:'독살',name:'렉스터 벨킨',addr:'56 3rd Ave, Seattle'};
-    const ok = nrm(get('raf-q1'))===nrm(ans.q1) && nrm(get('raf-q2'))===nrm(ans.q2) && nrm(get('raf-q3'))===nrm(ans.q3)
-      && nrm(get('raf-name'))===nrm(ans.name) && nrm(get('raf-addr'))===nrm(ans.addr);
-    if(!ok){ this.toast('아직 정답이 아닌 칸이 있어요. 전시·편지를 다시 확인해보세요.'); return; }
+    const fields=[['raf-q1','소원'],['raf-q2','36'],['raf-q3','독살'],['raf-name','렉스터 벨킨'],['raf-addr','56 3rd Ave, Seattle']];
+    let ok=true;
+    fields.forEach(([id,a])=>{ const el=document.getElementById(id); if(!el) return;
+      const good=nrm(el.value||'')===nrm(a);
+      el.classList.toggle('wrong', !good);   // 정답이 아닌 칸은 빨간 테두리
+      if(!good) ok=false; });
+    if(!ok){ this.toast('빨간색으로 표시된 칸의 정답을 다시 확인해보세요.'); return; }
     if(this.level<1){ this.level=1; this.updateStep(); }
     document.getElementById('sheetModal').classList.remove('on');
     this.lookupKeyword('응모하기', false); this.autoSave();
@@ -1773,7 +1789,19 @@ TEST_JUMPS: [
     const t=this._inviteTexts||[];
     const txt='<div class="invite-text">'+t.map((x,i)=>'<p class="'+(i===0?'inv-title':(i===t.length-1?'inv-sign':''))+'">'+this.esc(x)+'</p>').join('')+'</div>';
     const rot=((this._inviteRot||0)%360);
-    return '<div class="invite-wrap" style="transform:rotate('+rot+'deg)">'+txt+art+'</div>';
+    return '<div class="invite-rotbox"><div class="invite-wrap" style="transform:rotate('+rot+'deg)">'+txt+art+'</div></div>';
+  },
+  // 회전(90/270°)하면 시각적 가로·세로가 바뀌므로, 외곽 박스에 회전 후 크기를 예약해
+  // 좌측이 잘려 스펠링을 못 읽는 문제를 막는다. (innerHTML 갱신 직후 호출)
+  _fitInviteBox(){
+    const box=document.querySelector('.invite-rotbox'); const wrap=box&&box.querySelector('.invite-wrap');
+    if(!box||!wrap) return;
+    requestAnimationFrame(()=>{
+      const rot=((this._inviteRot||0)%360);
+      const w=wrap.offsetWidth, h=wrap.offsetHeight;
+      if(rot===90||rot===270){ box.style.width=h+'px'; box.style.height=w+'px'; }
+      else { box.style.width=w+'px'; box.style.height=h+'px'; }
+    });
   },
   openSheet(code){
     const s=this.data.sheets[code]; if(!s) return;
@@ -1812,11 +1840,12 @@ TEST_JUMPS: [
           +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌리기</button>'
         : '';
       const rb=document.getElementById('sheetRotBtn');
-      if(rb) rb.onclick=()=>{ this._inviteRot=(((this._inviteRot==null?90:this._inviteRot)+90)%360); document.getElementById('sheetBody').innerHTML=this.renderInviteHtml(); };
+      if(rb) rb.onclick=()=>{ this._inviteRot=(((this._inviteRot==null?90:this._inviteRot)+90)%360); document.getElementById('sheetBody').innerHTML=this.renderInviteHtml(); this._fitInviteBox(); };
     }
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
     document.getElementById('sheetModal').classList.add('on');
+    if(s.name==='초대장') this._fitInviteBox();
   },
   // 인터랙티브 시트 → 작동 위젯 (없으면 null)
   sheetWidget(act,code){
@@ -2582,7 +2611,12 @@ TEST_JUMPS: [
     codes.forEach(c=>{ const d=document.createElement('div'); d.className='inv-item'+(this.combineMode&&sel.includes(c)?' picked':''); d.dataset.code=c;
       d.innerHTML=this.esc(this.inv[c].name)+'<span class="code">'+c+'</span>';
       if(this.combineMode){ d.onclick=()=>this.pickCombine(c); }
-      else { d.onclick=()=>{ document.getElementById('detailInput').value=c; this.detailLookup(); }; }
+      else { d.onclick=()=>{
+        const box=document.getElementById('detailBox'), di=document.getElementById('detailInput');
+        // 이미 열려 있는 같은 아이템을 다시 누르면 닫기 (토글)
+        if(box && box.style.display!=='none' && di && di.value===c){ this.clearItemDetail(); return; }
+        di.value=c; this.detailLookup();
+      }; }
       g.appendChild(d); });
   },
   // 아이템 사용 (코드를 키워드로 입력 = 사용)
@@ -2814,7 +2848,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v84';
+var APP_VERSION='v85';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
