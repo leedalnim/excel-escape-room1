@@ -303,9 +303,9 @@
   .code-btn{font-family:var(--mono);font-size:13px;border:1px solid var(--gold);color:var(--gold);
     background:rgba(207,166,78,.08);padding:2px 11px;border-radius:20px;cursor:pointer;transition:.2s;margin:0 2px;display:inline-block}
   .code-btn:hover{background:var(--gold);color:#0b0c10}
-  .code-btn.sheet{border:1px solid var(--blue);color:#fff;background:var(--blue);font-weight:700;
-    padding:6px 16px;border-radius:8px;box-shadow:0 2px 9px rgba(90,125,154,.35)}
-  .code-btn.sheet:hover{background:#6f97b8;color:#fff}
+  .code-btn.sheet{border:1px solid #7d5fd0;color:#fff;background:#7d5fd0;font-weight:700;
+    padding:6px 16px;border-radius:8px;box-shadow:0 2px 9px rgba(125,95,208,.35)}
+  .code-btn.sheet:hover{background:#9079e0;color:#fff}
   .code-btn.got{border-color:var(--ok);color:var(--ok);background:rgba(106,143,95,.12);cursor:default}
   .code-btn.got:hover{background:rgba(106,143,95,.12);color:var(--ok)}
   .map-kids{margin-left:9px;padding-left:13px;border-left:1px solid var(--line)}
@@ -409,6 +409,26 @@
   .pamph-q input.wrong{border-color:#c0392b!important;background:#fdecea!important;box-shadow:0 0 0 2px rgba(192,57,43,.18)!important}
   .pamph-hint{margin:12px 0 0}
   .pamph-hint summary{color:#27465f}
+  /* 종이 아코디언(인쇄·접기 → 코드로 재현) */
+  .acc-wrap{text-align:center}
+  .acc-paper{display:flex;justify-content:center;margin:14px auto;padding:12px;background:#fff;border-radius:6px;
+    width:max-content;max-width:100%;perspective:700px;transition:transform .4s}
+  .acc-pleat{display:grid;grid-auto-rows:9px;transform-origin:center center;transition:transform .45s ease}
+  .acc-pleat span{display:block;width:11px;height:9px}
+  .acc-paper.fold-left .acc-pleat.odd{transform:rotateY(62deg);filter:brightness(.7)}
+  .acc-paper.fold-left .acc-pleat.even{transform:rotateY(-12deg)}
+  .acc-paper.fold-right .acc-pleat.even{transform:rotateY(-62deg);filter:brightness(.7)}
+  .acc-paper.fold-right .acc-pleat.odd{transform:rotateY(12deg)}
+  .acc-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .acc-btn{background:#7d5fd0;color:#fff;border:none;border-radius:6px;padding:8px 13px;font-size:12px;
+    cursor:pointer;font-family:var(--mono);transition:.2s}
+  .acc-btn:hover{background:#9079e0}
+  .acc-btn.on{background:#cfa64e;color:#17140c}
+  .acc-num{display:inline-flex;gap:12px;justify-content:center;margin:14px auto 4px;padding:14px 18px;
+    background:#0e1016;border-radius:8px;max-width:100%}
+  .acc-digit{display:grid;grid-template-columns:repeat(3,9px);grid-auto-rows:9px;gap:1px}
+  .acc-digit span{display:block;width:9px;height:9px;border-radius:1px}
+  .acc-cap{font-size:12px;color:#27465f;margin-top:6px}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;justify-content:center!important;gap:10px;color:var(--gold)!important;font-family:var(--serif)!important;font-size:21px!important}
@@ -1781,7 +1801,6 @@ TEST_JUMPS: [
         for(let c=0;c<5;c++){ line.push(g[r][c]==='1'?pal[(gc+r*2+li)%pal.length]:null); gc++; } line.push(null); gc++; });
       grid.push(line);
     }
-    grid=this._rot90(grid); // SCALPEL은 카드에 옆으로 적혀 있음(단서) — 카드 전체를 돌려서 읽음
     const W=grid[0].length;
     let art='<div class="invite-art" style="grid-template-columns:repeat('+W+',4px)">';
     grid.forEach(line=>line.forEach(col=>{ art+='<span style="background:'+(col||'transparent')+'"></span>'; }));
@@ -1832,15 +1851,12 @@ TEST_JUMPS: [
     }
     document.getElementById('sheetBody').innerHTML=html;
     if(widget) document.getElementById('sheetBody').appendChild(widget);
-    // 초대장 같은 "색 픽셀 그림" 단서: 힌트 + 90° 돌려보기 도구
+    // 초대장 "색 픽셀 그림" 단서: 키워드 안내
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 위 색칠 그림은 <b>입장 키워드(7글자 알파벳)</b>입니다. 화면(또는 고개)을 90° 돌려서 읽어보세요. (대·소문자 무관)</div>'
-          +'<button class="sheet-rot-btn" id="sheetRotBtn">↻ 90° 돌리기</button>'
+        ? '<div class="sheet-hint">💡 위 색칠 그림은 <b>입장 키워드(7글자 알파벳)</b>입니다. (대·소문자 무관)</div>'
         : '';
-      const rb=document.getElementById('sheetRotBtn');
-      if(rb) rb.onclick=()=>{ this._inviteRot=(((this._inviteRot==null?90:this._inviteRot)+90)%360); document.getElementById('sheetBody').innerHTML=this.renderInviteHtml(); this._fitInviteBox(); };
     }
     const card=document.querySelector('.sheet-card');
     if(card) card.setAttribute('data-theme', this.sheetTheme(s.name));
@@ -1855,9 +1871,58 @@ TEST_JUMPS: [
     if(key==='act4/39')  return this.buildController();
     if(key==='act3/82')  return this.buildBreaker();
     if(key==='act3/96')  return this.buildClock();
+    if(key==='act3/71')  return this.buildAccordion();
     if(key==='act5/1')   return this.buildLogicGrid();
     if(key==='act5/93' || key==='act5/99') return this.buildSecurity();
     return null;
+  },
+  // 종이 아코디언(71) — "인쇄해서 접으세요" 물리 퍼즐을 화면 안에서 재현
+  _accGrid(){
+    const s=(this.data.sheets&&this.data.sheets['71'])||{};
+    const rows=String(s.html||'').split('<tr>').slice(1).map(r=>{ const out=[];
+      [...r.matchAll(/<td([^>]*)>([^<]*)<\/td>/g)].forEach(m=>{ const bg=(m[1].match(/background:(#[0-9A-Fa-f]+)/)||[])[1]||null;
+        const cs=+((m[1].match(/colspan="(\d+)"/)||[])[1]||1); for(let i=0;i<cs;i++) out.push(bg); }); return out; });
+    let rMin=1e9,rMax=-1,cMin=1e9,cMax=-1;
+    rows.forEach((r,ri)=>r.forEach((c,ci)=>{ if(c){ if(ri<rMin)rMin=ri; if(ri>rMax)rMax=ri; if(ci<cMin)cMin=ci; if(ci>cMax)cMax=ci; } }));
+    const g=[]; if(rMax<0) return g;
+    for(let ri=rMin;ri<=rMax;ri++){ const row=[]; for(let ci=cMin;ci<=cMax;ci++) row.push((rows[ri]&&rows[ri][ci])||null); g.push(row); }
+    return g;
+  },
+  _accNum(num,color){
+    const DF={'0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
+      '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],
+      '5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
+      '8':['111','101','111','101','111'],'9':['111','101','111','001','111']};
+    let html='<div class="acc-num">';
+    for(const ch of String(num)){ const d=DF[ch]||DF['0']; html+='<div class="acc-digit">';
+      for(let r=0;r<5;r++) for(let c=0;c<3;c++) html+='<span style="background:'+(d[r][c]==='1'?color:'transparent')+'"></span>';
+      html+='</div>'; }
+    html+='</div>'; return html;
+  },
+  buildAccordion(){
+    const grid=this._accGrid();
+    const wrap=document.createElement('div'); wrap.className='acc-wrap';
+    const note=document.createElement('div'); note.className='sheet-hint';
+    note.innerHTML='💡 인쇄·가위 없이 확인할 수 있어요. 종이를 아코디언처럼 접었다고 생각하고, <b>왼쪽</b>·<b>오른쪽</b>에서 기울여 보세요.';
+    wrap.appendChild(note);
+    const paper=document.createElement('div'); paper.className='acc-paper';
+    const W=grid.length?grid[0].length:0;
+    for(let c=0;c<W;c++){ const pl=document.createElement('div'); pl.className='acc-pleat '+(c%2?'odd':'even');
+      for(let r=0;r<grid.length;r++){ const cell=document.createElement('span'); cell.style.background=grid[r][c]||'transparent'; pl.appendChild(cell); }
+      paper.appendChild(pl); }
+    wrap.appendChild(paper);
+    const view=document.createElement('div');
+    const cap=document.createElement('div'); cap.className='acc-cap';
+    const bar=document.createElement('div'); bar.className='acc-bar';
+    const btns=[];
+    const setOn=(b)=>{ btns.forEach(x=>x.classList.toggle('on', x===b)); };
+    const mk=(txt,cls,fn)=>{ const b=document.createElement('button'); b.className='acc-btn'; b.textContent=txt;
+      b.onclick=()=>{ paper.className='acc-paper'+(cls?' '+cls:''); fn(b); setOn(b); }; btns.push(b); bar.appendChild(b); return b; };
+    mk('← 왼쪽에서 보기','fold-left',()=>{ view.innerHTML=this._accNum('6123','#2f55c8'); cap.textContent='왼쪽에서 본 숫자'; });
+    mk('정면','',()=>{ view.innerHTML=''; cap.textContent=''; });
+    mk('오른쪽에서 보기 →','fold-right',()=>{ view.innerHTML=this._accNum('4718','#c80051'); cap.textContent='오른쪽에서 본 숫자'; });
+    wrap.appendChild(bar); wrap.appendChild(view); wrap.appendChild(cap);
+    return wrap;
   },
   // act3 시계(B시트) — 날짜·L-R·E=O가 새겨진 시계판 (몰입 디자인)
   buildClock(){
@@ -2818,14 +2883,22 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.q
 Game.loadEasy();
 // 낯선 단어 일괄 치환 (게시판·힌트·정답 등 표시 텍스트)
 function relabelData(o){
-  if(typeof o==='string') return o.replace(/미씽/g,'걸레질').replace(/싸이코패스/g,'사이코패스')
+  if(typeof o==='string'){ let s=o.replace(/미씽/g,'걸레질').replace(/싸이코패스/g,'사이코패스')
     .replace(/진짜 엔딩을 진행하시려면 총 6개의 엔딩 코드를 더한 값을\s*키워드 코드에 입력하셔야 합니다\./g,'6개의 엔딩을 모두 모으면, 가방의 "엔딩 리스트"에 "진짜 엔딩 열기" 버튼이 자동으로 나타납니다.')
     .replace(/6개의 일반 엔딩을 보기 위해 처음부터 다시 시작하시려면\s*키워드 코드에 "재시작"을 입력하세요\./g,'다른 엔딩을 보려면 "이 화 다시" 버튼을 누르세요. (지금까지 모은 엔딩은 유지됩니다.)')
     .replace(/이후 진행은 "인벤토리" 내의 상세 설명 칸에\s*키워드를 입력해서 진행하게 됩니다\./g,'이후 진행은 아래 키워드 입력창에 키워드를 입력하여 진행합니다.')
     .replace(/"인벤토리" 내의 상세 설명란에\s*"제보" 를 입력하세요\./g,'아래 키워드 입력창에 "제보" 를 입력하세요.')
     // 제보 인터뷰 형식 안내 → 짧은 정답 허용 안내로
     .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'정답만 입력해주세요')
-    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'').replace(/시트/g,'자료').replace(/[A-Z]\s*자료/g,'자료').replace(/자료\s*[A-Z](?=[를을이가는은의에])/g,'자료').replace(/(각 전시관의 입구가 있다[\s\S]*?)\(\s*\?\s*\/\s*나가기\s*\)/, '$1(카운터 / 본능 / 예술 / 악마 / 나가기)').replace(/(어떤 책을 구입하시겠어요\?)/, '$1\n\n신문 기사에서 본 그 책의 제목을 점원에게 말해보세요.');
+    .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'').replace(/시트/g,'자료').replace(/[A-Z]\s*자료/g,'자료').replace(/자료\s*[A-Z](?=[를을이가는은의에])/g,'자료').replace(/(각 전시관의 입구가 있다[\s\S]*?)\(\s*\?\s*\/\s*나가기\s*\)/, '$1(카운터 / 본능 / 예술 / 악마 / 나가기)').replace(/(어떤 책을 구입하시겠어요\?)/, '$1\n\n신문 기사에서 본 그 책의 제목을 점원에게 말해보세요.')
+      // 자료 보기 버튼 앞뒤의 "-" 장식 기호 제거
+      .replace(/-\s*(자료\s*코드\s*[:：]\s*\w+)\s*-/g,'$1')
+      // 종이 아코디언: "인쇄해서 접으세요" 물리 안내 → 화면 내 자료(71)로 안내
+      .replace(/자료는 직접 인쇄하여 아코디언처럼 접어보셔야 합니다\./g,'아래 "종이 아코디언" 자료를 열고 "왼쪽에서 보기 / 오른쪽에서 보기"로 확인하세요.\n\n자료 코드 : 71');
+    // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
+    if(/벽에 걸린 디지털 시계를 확인/.test(s) && !/자료\s*코드\s*[:：]\s*96/.test(s)) s+='\n\n자료 코드 : 96';
+    return s;
+  }
   if(Array.isArray(o)) return o.map(relabelData);
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
@@ -2848,7 +2921,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v85';
+var APP_VERSION='v86';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
