@@ -1333,6 +1333,22 @@ TEST_JUMPS: [
         if(!ik){ const nk=nrm(kw); if(nk) for(const c in this.data.items){ if(nrm(c)===nk){ ik=c; break; } } }
         if(ik){ this.handleItemKeyword(ik, silent?null:kw); return; }
       }
+      // 분기 코드 직접 입력(예: 13XX+XX69=1369처럼 두 시점의 절반을 합친 코드)으로 분기점 통과
+      // — 전용 패시지가 없어도 단계가 진행되도록 처리
+      if(/^\d+$/.test(kw) && this.data.branchOrder && this.data.branchOrder.indexOf(kw)>=0){
+        const idx=this.data.branchOrder.indexOf(kw);
+        this.history.push({level:this.level, inv:{...this.inv}, endings:{...this.endings}, kw});
+        const advanced = this.level < idx+1;
+        if(advanced){ this.level=idx+1; this.updateStep(); }
+        // 분기점을 막고 있던 상황(정문 작동 등) 정리
+        if(this.situations) for(const sk in this.situations) delete this.situations[sk];
+        this.renderSituations&&this.renderSituations();
+        this.printEntry(silent?null:kw, advanced
+          ? '✓ 분기 코드가 확인되어 다음 단계로 진행됩니다.\n계속 진행하세요.'
+          : '이미 통과한 분기 코드입니다.', {notice:true});
+        this.lastKw=kw; if(this.seenKw) this.seenKw.add(kw); this.autoSave();
+        return;
+      }
       this.printEntry(silent?null:kw, '입력하신 키워드를 찾을 수 없습니다. 지문을 다시 살펴보거나, 다른 키워드를 시도해보세요.', {bad:true});
       return;
     }
@@ -1467,6 +1483,9 @@ TEST_JUMPS: [
     { const kw=(this.history[this.history.length-1]||{}).kw||''; this.situations=this.situations||{};
       const scm=text.match(/상황\s*코드\s*[:：]\s*([A-Za-z]+)/);
       if(kw && !/^\d+$/.test(kw)){ if(scm) this.situations[kw]=scm[1]; else if(this.situations[kw]) delete this.situations[kw]; }
+      // 상황을 "상황코드+아이템코드"(예: do48, ma27)로 해결하면 해당 상황 제거
+      for(const sk in this.situations){ const sc=this.situations[sk];
+        if(sc){ try{ if(new RegExp('^'+sc+'\\d+$','i').test(kw)) delete this.situations[sk]; }catch(e){} } }
       this.renderSituations(); }
 
     // track visited hubs (places you can return to) — parent = where you came from
@@ -1669,6 +1688,10 @@ TEST_JUMPS: [
   resolveWord(w){
     if(this.canResolveNow(w)) return w;
     for(const p of JOSA){ if(w.length>p.length && w.endsWith(p)){ const s=w.slice(0,w.length-p.length); if(this.canResolveNow(s)) return s; } }
+    // 키워드 뒤에 서술형 어미가 붙은 경우(예: "혼란스럽다")도 키워드 부분을 인식 → 본문에서 탭 가능
+    // (canResolveNow가 참인 실제 키워드일 때만 반환하므로 오탐 없음)
+    const ENDINGS=['스럽다','스러웠다','스러운','스럽','하다','했다','했어','하는','한','해'];
+    for(const p of ENDINGS){ if(w.length>p.length && w.endsWith(p)){ const s=w.slice(0,w.length-p.length); if(this.canResolveNow(s)) return s; } }
     return null;
   },
   // 현재 레벨까지 등장하는 "띄어쓰기 포함" 키워드 목록 (길이 desc) — 멀티워드 밑줄용. 미래 레벨은 제외(스포일러 방지)
@@ -1904,7 +1927,7 @@ TEST_JUMPS: [
     const grid=this._accGrid();
     const wrap=document.createElement('div'); wrap.className='acc-wrap';
     const note=document.createElement('div'); note.className='sheet-hint';
-    note.innerHTML='💡 인쇄·가위 없이 확인할 수 있어요. 종이를 아코디언처럼 접었다고 생각하고, <b>왼쪽</b>·<b>오른쪽</b>에서 기울여 보세요.';
+    note.innerHTML='💡 인쇄·가위 없이 확인할 수 있어요. 종이를 아코디언처럼 접었다고 생각하고, <b>왼쪽</b>·<b>오른쪽</b>에서 기울여 보세요.<br>여기서 나온 두 숫자는 <b>시계의 L·R 표기</b>(영어책 참고)와 연결됩니다.';
     wrap.appendChild(note);
     const paper=document.createElement('div'); paper.className='acc-paper';
     const W=grid.length?grid[0].length:0;
@@ -1944,6 +1967,9 @@ TEST_JUMPS: [
     marks.forEach((mk,i)=>{ const e=document.createElement('div'); e.className='clock-mark m'+i; e.textContent=mk; face.appendChild(e); });
     face.appendChild(hh); face.appendChild(mh); face.appendChild(pin); face.appendChild(c);
     wrap.appendChild(face);
+    const cap=document.createElement('div'); cap.className='sheet-hint'; cap.style.marginTop='10px';
+    cap.innerHTML='💡 시계에 적힌 <b>L·R</b>(그리고 UV 이후의 <b>E=O</b>)은 <b>영어책</b>을 참고해 해석하세요.';
+    wrap.appendChild(cap);
     return wrap;
   },
   // act5 논리퍼즐(A시트) — 6항목 × 5부지 풀이표 (직접 채우는 스크래치패드)
@@ -2054,7 +2080,10 @@ TEST_JUMPS: [
     const body=document.createElement('div'); body.className='breaker-body';
     const sol=[[1,1,1,0,0],[1,1,1,1,0],[1,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0]];
     const grid=Array.from({length:5},()=>[0,0,0,0,0]);
-    let done=false;
+    // 이미 분전함을 풀어 진행한 상태(레벨 2+)면 정답 패턴을 그대로 복원해 보여줌
+    const already = this.level>=2;
+    let done=already;
+    if(already){ for(let r=0;r<5;r++)for(let c=0;c<5;c++) grid[r][c]=sol[r][c]; }
     const status=document.createElement('div'); status.className='mg-status'; status.textContent='차단기를 올리고 내려, 가로·세로 표시등을 모두 초록으로 만드세요.';
     const result=document.createElement('div'); result.className='mg-result';
     const tbl=document.createElement('table'); tbl.className='brk-grid';
@@ -2064,7 +2093,8 @@ TEST_JUMPS: [
       for(let r=0;r<5;r++){ let rm=true; for(let c=0;c<5;c++){ if(grid[r][c]!==sol[r][c]) rm=false; } rowLed[r].className='brk-led '+(rm?'on':''); if(!rm) all=false; }
       for(let c=0;c<5;c++){ let cm=true; for(let r=0;r<5;r++){ if(grid[r][c]!==sol[r][c]) cm=false; } colLed[c].className='brk-led '+(cm?'on':''); if(!cm) all=false; }
       for(let r=0;r<5;r++)for(let c=0;c<5;c++){ sw[r][c].className='brk-toggle '+(grid[r][c]?'on':''); }
-      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 전원 복구! 조명이 바뀐다…':'';
+      result.className='mg-result'+(all?' win':'');
+      result.textContent=all?(already?'✓ 전원 복구 완료':'✓ 전원 복구! 잠시 후 자동으로 진행됩니다…'):'';
       // 분전함을 풀면 실제로 진행을 전진(레벨 1→2)시키고 UV 조명 연출 지문으로 이동
       if(all && !done){ done=true;
         if(this.level<2){ this.level=2; this.updateStep&&this.updateStep(); }
@@ -2499,6 +2529,8 @@ TEST_JUMPS: [
     if(fuseEl){ e.appendChild(fuseEl); }
 
     // 자물쇠/도어락 지문 → 그래픽 잠금장치 위젯 (명시적 'N자리' 입력 지문에만)
+    // 위젯이 길어 힌트/선택지를 가리지 않도록, 실제 추가는 선택지 렌더 이후로 미룬다.
+    let lockEl=null;
     const dm=/([1-9])\s*자리/.exec(story);
     if(dm && !/^(힌트|정답)/.test(echoKw||'') && !/획득\s*[\]】]/.test(story) &&
        !/풀고|열렸|열고|들어왔|들어간|해제/.test(story) &&
@@ -2508,7 +2540,7 @@ TEST_JUMPS: [
       // (story는 선택지가 제거된 상태라, 정답 도출은 원본 text 기준으로 판단)
       const la=this.lockAnswer(String(text), parseInt(dm[1]));
       if(!(la && !this.canResolve(la))){
-        e.appendChild(this.buildLock(parseInt(dm[1]), story));
+        lockEl=this.buildLock(parseInt(dm[1]), story);
       }
     }
 
@@ -2563,6 +2595,8 @@ TEST_JUMPS: [
       e.appendChild(c);
       // (숨겨진 키워드 안내 박스는 제거 — 하단 입력창 안내로 충분, 흐름 끊김 방지)
     }
+    // 잠금장치 위젯은 선택지(힌트 버튼 포함) 다음에 배치 → 힌트가 화면 위쪽에 보이게
+    if(lockEl) e.appendChild(lockEl);
 
     // 보유한 아이템이 '필요하다'고 안내하는 지문 → 코드 입력/오답 없이 바로 '사용' 버튼
     Object.keys(this.inv).forEach(code=>{
@@ -2913,6 +2947,12 @@ function relabelData(o){
       // 엑셀 UI 기준 "상세설명 입력" 가이드 → 현재 가방(인벤토리) UI 안내로
       .replace(/인벤토리 내 상세설명에 편지의 아이템 코드를 입력하여\s*\n?\s*내용을 참고해보세요\./g,'가방(인벤토리)에서 "편지"를 눌러 내용을 참고해보세요.')
       .replace(/이번 \? 키워드는 아이템 "편지"의\s*\n?\s*아이템 코드를 인벤토리 내 상세 설명에 입력하여\s*\n?\s*상세 설명을 참고해보세요\./g,'이번 ? 키워드는 가방(인벤토리)에서 "편지"를 눌러 상세 설명을 참고해보세요.')
+      // [E] UV 조명 이후 로비 시계를 다시 보도록 유도 + (시계) 선택지 추가
+      .replace(/(벽에 안보이던 섬뜩한 글이 나를 조여왔다\.)\s*\n\s*\(\s*1405\s*\/\s*힌트5\s*\)/, '$1\n\nUV 조명이 켜지자, 로비의 시계도 무언가 달라 보인다.\n\n(시계 / 1405 / 힌트5)')
+      // [G] SCALPEL 입장키 — 초대장 자료를 살펴보도록 유도
+      .replace(/(입장 키워드 말씀 주시겠습니까\?)/g, '$1\n\n※ 입장 키워드는 받은 "초대장" 자료 안에 숨어 있는 것 같다. 자료를 꼼꼼히 살펴보자.')
+      // [H] 만 나이 계산용 생년월일을 기억하도록 메모 유도
+      .replace(/(자수로 숫자가 적혀있었다\.\s*\n\s*1986\.11\.30\.)\s*\n\s*\(\s*캔버스\s*\)/g, '$1\n\n※ 이 생년월일은 나중에 필요할지도 모른다.\n\n(캔버스)')
       // 위 제거로 생긴 빈 줄 정리
       .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
@@ -2941,7 +2981,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v87';
+var APP_VERSION='v88';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
