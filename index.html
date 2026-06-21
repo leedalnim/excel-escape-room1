@@ -1801,6 +1801,7 @@ TEST_JUMPS: [
         for(let c=0;c<5;c++){ line.push(g[r][c]==='1'?pal[(gc+r*2+li)%pal.length]:null); gc++; } line.push(null); gc++; });
       grid.push(line);
     }
+    grid=this._rot90(grid); // SCALPEL은 카드 오른쪽에 옆으로 누워 있음(단서) — 고개를 기울여 읽음
     const W=grid[0].length;
     let art='<div class="invite-art" style="grid-template-columns:repeat('+W+',4px)">';
     grid.forEach(line=>line.forEach(col=>{ art+='<span style="background:'+(col||'transparent')+'"></span>'; }));
@@ -1855,7 +1856,7 @@ TEST_JUMPS: [
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 위 색칠 그림은 <b>입장 키워드(7글자 알파벳)</b>입니다. (대·소문자 무관)</div>'
+        ? '<div class="sheet-hint">💡 오른쪽 색칠 그림은 옆으로 누운 <b>입장 키워드(7글자 알파벳)</b>입니다. 고개를 오른쪽으로 90° 기울여 읽어보세요. (대·소문자 무관)</div>'
         : '';
     }
     const card=document.querySelector('.sheet-card');
@@ -2053,6 +2054,7 @@ TEST_JUMPS: [
     const body=document.createElement('div'); body.className='breaker-body';
     const sol=[[1,1,1,0,0],[1,1,1,1,0],[1,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0]];
     const grid=Array.from({length:5},()=>[0,0,0,0,0]);
+    let done=false;
     const status=document.createElement('div'); status.className='mg-status'; status.textContent='차단기를 올리고 내려, 가로·세로 표시등을 모두 초록으로 만드세요.';
     const result=document.createElement('div'); result.className='mg-result';
     const tbl=document.createElement('table'); tbl.className='brk-grid';
@@ -2062,7 +2064,16 @@ TEST_JUMPS: [
       for(let r=0;r<5;r++){ let rm=true; for(let c=0;c<5;c++){ if(grid[r][c]!==sol[r][c]) rm=false; } rowLed[r].className='brk-led '+(rm?'on':''); if(!rm) all=false; }
       for(let c=0;c<5;c++){ let cm=true; for(let r=0;r<5;r++){ if(grid[r][c]!==sol[r][c]) cm=false; } colLed[c].className='brk-led '+(cm?'on':''); if(!cm) all=false; }
       for(let r=0;r<5;r++)for(let c=0;c<5;c++){ sw[r][c].className='brk-toggle '+(grid[r][c]?'on':''); }
-      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 전원 복구! 분전함 코드 — 1405':'';
+      result.className='mg-result'+(all?' win':''); result.textContent=all?'✓ 전원 복구! 조명이 바뀐다…':'';
+      // 분전함을 풀면 실제로 진행을 전진(레벨 1→2)시키고 UV 조명 연출 지문으로 이동
+      if(all && !done){ done=true;
+        if(this.level<2){ this.level=2; this.updateStep&&this.updateStep(); }
+        this.autoSave&&this.autoSave();
+        setTimeout(()=>{ const m=document.getElementById('sheetModal'); if(m) m.classList.remove('on');
+          if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); }
+          this.lookupKeyword('분전함', false);
+        }, 1000);
+      }
     };
     // header row (col leds)
     const h=document.createElement('tr'); h.appendChild(document.createElement('th'));
@@ -2891,10 +2902,19 @@ function relabelData(o){
     // 제보 인터뷰 형식 안내 → 짧은 정답 허용 안내로
     .replace(/\([^()]*\?\s*입니다[^()]*\)/g,'정답만 입력해주세요')
     .replace(/※\s*띄어쓰기 필수[^※]*?입력\.\s*/g,'').replace(/시트/g,'자료').replace(/[A-Z]\s*자료/g,'자료').replace(/자료\s*[A-Z](?=[를을이가는은의에])/g,'자료').replace(/(각 전시관의 입구가 있다[\s\S]*?)\(\s*\?\s*\/\s*나가기\s*\)/, '$1(카운터 / 본능 / 예술 / 악마 / 나가기)').replace(/(어떤 책을 구입하시겠어요\?)/, '$1\n\n신문 기사에서 본 그 책의 제목을 점원에게 말해보세요.')
-      // 자료 보기 버튼 앞뒤의 "-" 장식 기호 제거
-      .replace(/-\s*(자료\s*코드\s*[:：]\s*\w+)\s*-/g,'$1')
+      // 자료/아이템 보기 버튼 앞뒤의 "-" 장식 기호 제거
+      .replace(/-\s*((?:자료|아이템)\s*코드\s*[:：]\s*\w+)\s*-/g,'$1')
       // 종이 아코디언: "인쇄해서 접으세요" 물리 안내 → 화면 내 자료(71)로 안내
-      .replace(/자료는 직접 인쇄하여 아코디언처럼 접어보셔야 합니다\./g,'아래 "종이 아코디언" 자료를 열고 "왼쪽에서 보기 / 오른쪽에서 보기"로 확인하세요.\n\n자료 코드 : 71');
+      .replace(/자료는 직접 인쇄하여 아코디언처럼 접어보셔야 합니다\./g,'아래 "종이 아코디언" 자료를 열고 "왼쪽에서 보기 / 오른쪽에서 보기"로 확인하세요.\n\n자료 코드 : 71')
+      // 아이템 코드 수동 입력 안내(엑셀 잔재) 제거 — 지문 속 코드 버튼 클릭으로 자동 획득·자동 저장됨
+      .replace(/\n?[ \t]*(?:※\s*)?아이템 코드(?:\s*"?\w+"?)?\s*[을를]?\s*인벤토리에 입력하여\s*(?:추가|저장)하세요\.[ \t]*/g,'')
+      .replace(/\n?[ \t]*상세\s?설명에 아이템 코드를 입력하면 내용을 확인할 수 있습니다\.[ \t]*/g,'')
+      .replace(/\n?[ \t]*※\s*아이템 코드는 아이템을 사용할때[\s\S]*?상세 설명을 확인할 수 있습니다\.[ \t]*/g,'')
+      // 엑셀 UI 기준 "상세설명 입력" 가이드 → 현재 가방(인벤토리) UI 안내로
+      .replace(/인벤토리 내 상세설명에 편지의 아이템 코드를 입력하여\s*\n?\s*내용을 참고해보세요\./g,'가방(인벤토리)에서 "편지"를 눌러 내용을 참고해보세요.')
+      .replace(/이번 \? 키워드는 아이템 "편지"의\s*\n?\s*아이템 코드를 인벤토리 내 상세 설명에 입력하여\s*\n?\s*상세 설명을 참고해보세요\./g,'이번 ? 키워드는 가방(인벤토리)에서 "편지"를 눌러 상세 설명을 참고해보세요.')
+      // 위 제거로 생긴 빈 줄 정리
+      .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
     if(/벽에 걸린 디지털 시계를 확인/.test(s) && !/자료\s*코드\s*[:：]\s*96/.test(s)) s+='\n\n자료 코드 : 96';
     return s;
@@ -2921,7 +2941,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v86';
+var APP_VERSION='v87';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
