@@ -624,8 +624,8 @@
   .fuse-go{margin-top:11px;background:var(--accent);border:none;color:#fff;font-family:var(--mono);font-size:12px;padding:8px 18px;border-radius:7px;cursor:pointer}
   .fuse-go:hover{background:#d8483a}
   /* act3 시계판 디자인 */
-  .clock-wrap{display:flex;justify-content:center;margin:14px auto}
-  .clock-face{position:relative;width:230px;height:230px;border-radius:50%;
+  .clock-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;margin:14px auto}
+  .clock-face{position:relative;width:230px;height:230px;flex:0 0 auto;border-radius:50%;
     background:radial-gradient(circle at 50% 38%,#f7f3e8,#e3dcc8 70%,#cdc4ab);
     border:9px solid #2a2722;box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 0 22px rgba(120,100,60,.25)}
   .clock-tick{position:absolute;left:50%;top:6px;width:2px;height:11px;margin-left:-1px;background:#7a6e52;transform-origin:50% 109px}
@@ -1783,10 +1783,21 @@ TEST_JUMPS: [
   },
   submitRaffle(){
     const nrm=s=>String(s).replace(/[\s,.\-·]/g,'').toLowerCase();
-    const fields=[['raf-q1','소원'],['raf-q2','36'],['raf-q3','독살'],['raf-name','렉스터 벨킨'],['raf-addr','56 3rd Ave, Seattle']];
+    // 모바일 한글 입력(IME) 미확정 글자를 확정시키기 위해 포커스 해제 후 값을 읽음
+    // (이게 없으면 첫 클릭이 마지막 글자를 못 읽어 "한 번 더 눌러야 통과"되는 현상 발생)
+    try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
+    // 만 나이는 오늘 날짜 기준으로 계산(생일 1986.11.30) — 날짜가 흘러도 정답이 어긋나지 않게. 옛 정답 36도 허용
+    const ageNow=(()=>{ const t=new Date(); let a=t.getFullYear()-1986; const m=t.getMonth()+1,d=t.getDate(); if(m<11||(m===11&&d<30)) a--; return a; })();
+    const fields=[
+      ['raf-q1', v=>nrm(v)===nrm('소원')],
+      ['raf-q2', v=>{ const n=nrm(v); return n===String(ageNow)||n==='36'; }],
+      ['raf-q3', v=>nrm(v)===nrm('독살')],
+      ['raf-name', v=>nrm(v)===nrm('렉스터 벨킨')],
+      ['raf-addr', v=>nrm(v)===nrm('56 3rd Ave, Seattle')]
+    ];
     let ok=true;
-    fields.forEach(([id,a])=>{ const el=document.getElementById(id); if(!el) return;
-      const good=nrm(el.value||'')===nrm(a);
+    fields.forEach(([id,test])=>{ const el=document.getElementById(id); if(!el) return;
+      const good=test(el.value||'');
       el.classList.toggle('wrong', !good);   // 정답이 아닌 칸은 빨간 테두리
       if(!good) ok=false; });
     if(!ok){ this.toast('빨간색으로 표시된 칸의 정답을 다시 확인해보세요.'); return; }
@@ -2953,6 +2964,10 @@ function relabelData(o){
       .replace(/(입장 키워드 말씀 주시겠습니까\?)/g, '$1\n\n※ 입장 키워드는 받은 "초대장" 자료 안에 숨어 있는 것 같다. 자료를 꼼꼼히 살펴보자.')
       // [H] 만 나이 계산용 생년월일을 기억하도록 메모 유도
       .replace(/(자수로 숫자가 적혀있었다\.\s*\n\s*1986\.11\.30\.)\s*\n\s*\(\s*캔버스\s*\)/g, '$1\n\n※ 이 생년월일은 나중에 필요할지도 모른다.\n\n(캔버스)')
+      // [버그1] 서점 "나가기" 무한 루프 — 갈 곳(노르빈 뮤지엄)을 보이는 선택지로 노출
+      .replace(/(시애틀의 7월 말은[\s\S]*?)\(\s*\?\s*\/\s*힌트1\s*\)/, '$1(노르빈 뮤지엄 / 힌트1)')
+      // [버그2] 응모하기 흐름 안내 — 팜플렛 응모권 폼을 작성·제출하도록 명시
+      .replace(/아직 응모권의 모든 칸을 정확하게 입력하지 않았다\./, '아직 응모권의 모든 칸을 정확하게 입력하지 않았다.\n\n※ "팜플렛" 자료를 열어 응모권 칸을 채운 뒤, 폼 하단의 "응모하기" 버튼을 누르세요.')
       // 위 제거로 생긴 빈 줄 정리
       .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
@@ -2981,7 +2996,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v88';
+var APP_VERSION='v89';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
