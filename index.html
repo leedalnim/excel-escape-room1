@@ -429,6 +429,15 @@
   .acc-digit{display:grid;grid-template-columns:repeat(3,9px);grid-auto-rows:9px;gap:1px}
   .acc-digit span{display:block;width:9px;height:9px;border-radius:1px}
   .acc-cap{font-size:12px;color:#27465f;margin-top:6px}
+  /* 게시판(74) 두 그림 재현 */
+  .board-wrap{text-align:center}
+  .board-title{font-family:var(--serif);font-size:18px;color:#5b4a2c;margin-bottom:10px}
+  .board-pic{display:inline-block;background:#f3ead6;border:1px solid #b9a983;border-radius:6px;padding:14px 18px;margin:8px 6px;vertical-align:top}
+  .board-piclbl{font-weight:700;color:#5b4a2c;margin-bottom:8px;font-size:13px}
+  .board-cap{font-size:12px;color:#27465f;margin-top:8px;max-width:240px}
+  .bd-row{display:flex;gap:14px;justify-content:center}
+  .bd-cell{display:grid;grid-auto-rows:7px;gap:1px}
+  .bd-cell span{display:block;width:7px;height:7px}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;justify-content:center!important;gap:10px;color:var(--gold)!important;font-family:var(--serif)!important;font-size:21px!important}
@@ -1640,7 +1649,7 @@ TEST_JUMPS: [
     this.toast('쉬운 입력 모드 '+(this.easyMode?'켜짐':'꺼짐')); },
   updateEzBtn(){ const b=document.getElementById('ezToggle'); if(b){ b.innerHTML=IC('sparkles')+' 쉬운입력 '+(this.easyMode?'ON':'OFF'); b.classList.toggle('on',this.easyMode); } },
   toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
-    t.textContent=msg; t.classList.add('show'); clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'),1700); },
+    t.textContent=msg; t.classList.add('show'); clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'), Math.min(5000, Math.max(2600, String(msg).length*120))); },
   // 탭 좌표에서 단어 추출 (쉬운 입력 모드)
   wordAtPoint(x,y){
     let node,off;
@@ -1904,6 +1913,7 @@ TEST_JUMPS: [
     if(key==='act4/101') return this.buildUpDown();
     if(key==='act4/126') return this.buildKeypadSheet('6577','키패드');
     if(key==='act4/39')  return this.buildController();
+    if(key==='act4/74')  return this.buildNoticeBoard();
     if(key==='act3/82')  return this.buildBreaker();
     if(key==='act3/96')  return this.buildClock();
     if(key==='act3/71')  return this.buildAccordion();
@@ -1957,6 +1967,38 @@ TEST_JUMPS: [
     mk('정면','',()=>{ view.innerHTML=''; cap.textContent=''; });
     mk('오른쪽에서 보기 →','fold-right',()=>{ view.innerHTML=this._accNum('4718','#c80051'); cap.textContent='오른쪽에서 본 숫자'; });
     wrap.appendChild(bar); wrap.appendChild(view); wrap.appendChild(cap);
+    return wrap;
+  },
+  // 게시판(74) — 원본의 두 그림 데이터가 유실되어, 힌트가 설명하는 퍼즐 그대로 재현
+  // (왼쪽 위: 좌우 대칭 글자 → 왼쪽 절반이 숫자 3958 / 왼쪽 아래: 도형 사이 빈 공간이 숫자 5212)
+  _bdFont(){ return {'0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
+    '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],
+    '5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
+    '8':['111','101','111','101','111'],'9':['111','101','111','001','111']}; },
+  _bdSym(digits,color){ const F=this._bdFont(); const sp=b=>'<span style="background:'+b+'"></span>';
+    let h='<div class="bd-row">';
+    for(const ch of String(digits)){ const d=F[ch]||F['0']; h+='<div class="bd-cell" style="grid-template-columns:repeat(6,7px)">';
+      for(let r=0;r<5;r++){ for(let c=0;c<3;c++) h+=sp(d[r][c]==='1'?color:'transparent');
+        for(let c=2;c>=0;c--) h+=sp(d[r][c]==='1'?color:'transparent'); } h+='</div>'; }
+    return h+'</div>'; },
+  _bdNeg(digits,color){ const F=this._bdFont(); const sp=b=>'<span style="background:'+b+'"></span>';
+    let h='<div class="bd-row">';
+    for(const ch of String(digits)){ const d=F[ch]||F['0']; h+='<div class="bd-cell" style="grid-template-columns:repeat(5,7px)">';
+      for(let r=-1;r<=5;r++){ for(let c=-1;c<=3;c++){ const inD=(r>=0&&r<5&&c>=0&&c<3&&d[r][c]==='1'); h+=sp(inD?'transparent':color); } } h+='</div>'; }
+    return h+'</div>'; },
+  buildNoticeBoard(){
+    const wrap=document.createElement('div'); wrap.className='board-wrap';
+    const title=document.createElement('div'); title.className='board-title'; title.textContent='📌 직원 게시판';
+    const note=document.createElement('div'); note.className='sheet-hint';
+    note.innerHTML='💡 <b>「왼쪽 두 그림의 합」 − 「케어룸 호실 숫자」 = 비밀번호</b>';
+    wrap.appendChild(title); wrap.appendChild(note);
+    const pic=(label,cap,artHtml)=>{ const box=document.createElement('div'); box.className='board-pic';
+      const l=document.createElement('div'); l.className='board-piclbl'; l.textContent=label;
+      const a=document.createElement('div'); a.innerHTML=artHtml;
+      const c=document.createElement('div'); c.className='board-cap'; c.textContent=cap;
+      box.appendChild(l); box.appendChild(a); box.appendChild(c); return box; };
+    wrap.appendChild(pic('왼쪽 위 그림','한자처럼 보이지만 가운데를 기준으로 좌우 대칭입니다. 왼쪽 절반만 읽어보세요.', this._bdSym('3958','#3a2c14')));
+    wrap.appendChild(pic('왼쪽 아래 그림','도형들 사이의 빈 공간(구멍)을 읽어보세요.', this._bdNeg('5212','#4E2A26')));
     return wrap;
   },
   // act3 시계(B시트) — 날짜·L-R·E=O가 새겨진 시계판 (몰입 디자인)
@@ -2017,6 +2059,8 @@ TEST_JUMPS: [
     const MAX=13; let target=0, tries=0, over=true;
     const title=document.createElement('div'); title.className='mg-title'; title.textContent='★ UP & DOWN GAME ★';
     const status=document.createElement('div'); status.className='mg-status'; status.textContent='게임 시작을 눌러 도전하세요! (1000~9999)';
+    const memo=document.createElement('div'); memo.className='mg-status'; memo.style.cssText='font-size:11.5px;opacity:.8';
+    memo.textContent='※ 매번 무작위 숫자가 나오는 단순 미니게임입니다. (자물쇠·키패드 비밀번호와는 무관해요)';
     const log=document.createElement('div'); log.className='mg-log';
     const row=document.createElement('div'); row.className='mg-row';
     const input=document.createElement('input'); input.className='mg-input'; input.type='text'; input.inputMode='numeric'; input.maxLength=4; input.placeholder='1000~9999'; input.disabled=true;
@@ -2033,7 +2077,7 @@ TEST_JUMPS: [
     };
     gbtn.onclick=guess; sbtn.onclick=start; input.addEventListener('keydown',e=>{ if(e.key==='Enter') guess(); });
     row.appendChild(input); row.appendChild(gbtn);
-    w.appendChild(title); w.appendChild(status); w.appendChild(row); w.appendChild(log); w.appendChild(sbtn);
+    w.appendChild(title); w.appendChild(status); w.appendChild(memo); w.appendChild(row); w.appendChild(log); w.appendChild(sbtn);
     return w;
   },
   // 키패드 (act4 G시트) — 정답 입력 시 초록불
@@ -3019,7 +3063,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v90';
+var APP_VERSION='v91';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
