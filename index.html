@@ -2051,13 +2051,25 @@ TEST_JUMPS: [
     }
     const led=document.createElement('div'); led.className='kp-led red'; led.textContent='● 잠김';
     const disp=document.createElement('div'); disp.className='lock-display'; const slots=[]; let val='';
+    const isAct4Pad=(this.act==='act4' && name==='키패드');
+    const already=isAct4Pad && this.level>=3; let kpDone=already;
     for(let i=0;i<answer.length;i++){ const s=document.createElement('span'); s.className='lock-slot'; disp.appendChild(s); slots.push(s); }
     const render=()=>slots.forEach((s,i)=>{ s.textContent=val[i]||''; s.classList.toggle('filled',!!val[i]); });
+    const advance=()=>{ // 키패드 정답 → 청소 도구함 열림: 실제로 진행을 전진(레벨 2→3)
+      if(!isAct4Pad || kpDone) return; kpDone=true;
+      if(this.level<3){ this.level=3; this.updateStep&&this.updateStep(); }
+      this.autoSave&&this.autoSave();
+      setTimeout(()=>{ const m=document.getElementById('sheetModal'); if(m) m.classList.remove('on');
+        if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); }
+        this.lookupKeyword('키패드', false);
+      }, 1000);
+    };
+    if(already){ val=answer; led.className='kp-led green'; led.textContent='● 열림 — 통과 완료'; }
     const pad=document.createElement('div'); pad.className='lock-pad';
     ['1','2','3','4','5','6','7','8','9','⌫','0','확인'].forEach(k=>{
       const b=document.createElement('button'); b.className='lock-key'+(k==='확인'?' ok':'')+(k==='⌫'?' del':''); b.textContent=k;
       b.onclick=()=>{ if(k==='⌫'){ val=val.slice(0,-1); }
-        else if(k==='확인'){ if(val===answer){ led.className='kp-led green'; led.textContent='● 열림 — 통과!'; } else { led.className='kp-led red'; led.textContent='● 오답'; val=''; } }
+        else if(k==='확인'){ if(val===answer){ led.className='kp-led green'; led.textContent=isAct4Pad?'● 열림 — 잠시 후 진행됩니다…':'● 열림 — 통과!'; advance(); } else { led.className='kp-led red'; led.textContent='● 오답'; val=''; } }
         else if(val.length<answer.length){ val+=k; } render(); };
       pad.appendChild(b);
     });
@@ -2069,13 +2081,24 @@ TEST_JUMPS: [
     const w=document.createElement('div'); w.className='mini-game';
     const names=['A','B','C','D','E']; const init=[2,2,1,1,2]; let v=init.slice();
     const map=[[0,3],[1,4],[0,3,4],[2,4],[0,1,2]]; // ①~⑤ → 변압기
+    const already=this.level>=2; let done=already;
     const title=document.createElement('div'); title.className='mg-title'; title.textContent='⚡ 변압기 컨트롤러';
     const status=document.createElement('div'); status.className='mg-status'; status.textContent='버튼을 눌러 변압기 A~E를 모두 초록(작동)으로!';
     const board=document.createElement('div'); board.className='ctrl-board';
     const cells=names.map(n=>{ const c=document.createElement('div'); c.className='ctrl-cell'; board.appendChild(c); return c; });
     const result=document.createElement('div'); result.className='mg-result';
     const draw=()=>{ let allEven=true; v.forEach((x,i)=>{ const on=x%2===0; cells[i].className='ctrl-cell '+(on?'on':'off'); cells[i].innerHTML='<b>'+names[i]+'</b>'+(on?'작동':'정지'); if(!on) allEven=false; });
-      if(allEven){ result.className='mg-result win'; result.textContent='✓ 모든 변압기 작동! 컨트롤러 코드 — 1100'; } else { result.textContent=''; } };
+      if(allEven){ result.className='mg-result win'; result.textContent=already?'✓ 변압기 작동 완료':'✓ 모든 변압기 작동! 잠시 후 자동으로 진행됩니다…';
+        // 변압기 과부하 → 정전 → 잠긴 문 해제: 실제로 진행을 전진(레벨 1→2)
+        if(!done){ done=true;
+          if(this.level<2){ this.level=2; this.updateStep&&this.updateStep(); }
+          this.autoSave&&this.autoSave();
+          setTimeout(()=>{ const m=document.getElementById('sheetModal'); if(m) m.classList.remove('on');
+            if(window.innerWidth<=880){ const a=document.getElementById('aside'),b=document.getElementById('asideBackdrop'); if(a)a.classList.remove('open'); if(b)b.classList.remove('open'); }
+            this.lookupKeyword('1100', false);
+          }, 1000);
+        }
+      } else { result.textContent=''; } };
     const pad=document.createElement('div'); pad.className='ctrl-pad';
     ['①','②','③','④','⑤'].forEach((lab,bi)=>{ const b=document.createElement('button'); b.className='ctrl-btn'; b.textContent=lab;
       b.onclick=()=>{ map[bi].forEach(t=>v[t]++); draw(); }; pad.appendChild(b); });
@@ -2996,7 +3019,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v89';
+var APP_VERSION='v90';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
