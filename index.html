@@ -3050,6 +3050,8 @@ function relabelData(o){
       .replace(/유치원생 밀랍인형 가방 안에 있는 쪽지와,\s*\n\s*로비에 위치한 시계를 참조하여 비밀번호를 추측하세요\.\s*\n/, '')
       // [단순화] 도어락(2419): UV 시계 색 반전만으로 — "E=O / 탈출=반대 / 영어책" 제거
       .replace(/시계의 하단에는 E = O라고 적혀있으며,[\s\S]*?시계의 켜진 부분을 반대로 생각해볼까요\?/, 'UV 램프가 켜지면 시계 숫자판에 보라색·흰색이 나타납니다.\n시계 자료를 열고 색을 반전(보라↔흰색)해서 읽어보세요.\n(시계 자료의 "색 반전" 버튼을 누르면 됩니다.)')
+      // [영어책 삭제] 가방 안내에서 영어책 제거 + 종이를 보이는 선택지로
+      .replace(/가방에는 영어책과 종이가 들어있다\.\s*\n\s*\(\s*\?\s*\/\s*밀랍인형\s*\)/, '가방에는 종이가 들어있다.\n\n(종이 / 밀랍인형)')
       // 아이템 코드 수동 입력 안내(엑셀 잔재) 제거 — 지문 속 코드 버튼 클릭으로 자동 획득·자동 저장됨
       .replace(/\n?[ \t]*(?:※\s*)?아이템 코드(?:\s*"?\w+"?)?\s*[을를]?\s*인벤토리에 입력하여\s*(?:추가|저장)하세요\.[ \t]*/g,'')
       .replace(/\n?[ \t]*상세\s?설명에 아이템 코드를 입력하면 내용을 확인할 수 있습니다\.[ \t]*/g,'')
@@ -3086,7 +3088,10 @@ function relabelData(o){
   if(o && typeof o==='object'){ const r={}; for(const k in o) r[k]=relabelData(o[k]); return r; }
   return o;
 }
-document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);Game.loadProgress();
+document.getElementById("startLabel").textContent="불러오는 중…";loadData().then(function(d){DATA=relabelData(d);
+  // 영어책(act3 아이템 54) 제거 — 퍼즐 단순화로 더 이상 쓰이지 않음
+  try{ if(DATA.act3){ DATA.act3.levels.forEach(function(lv){ delete lv['영어책']; }); if(DATA.act3.items) delete DATA.act3.items['54']; } }catch(e){}
+  Game.loadProgress();
   // 저장이 있으면 새로고침 시 메뉴를 거치지 않고 바로 이어서 (진행이 사라진 것처럼 보이지 않도록)
   if(!Game.tryJump()){ if(Game.hasSave()){ Game.beginOrResume(); } else { Game.refreshMenu(); } }
   // 테스트 점프 패널 구성
@@ -3104,7 +3109,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v97';
+var APP_VERSION='v98';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
