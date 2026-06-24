@@ -2027,6 +2027,19 @@ TEST_JUMPS: [
     const cap=document.createElement('div'); cap.className='sheet-hint'; cap.style.marginTop='10px';
     cap.innerHTML='💡 시계에 적힌 <b>L·R</b>(그리고 UV 이후의 <b>E=O</b>)은 <b>영어책</b>을 참고해 해석하세요.';
     wrap.appendChild(cap);
+    const det=document.createElement('details'); det.className='hint-acc'; det.style.marginTop='8px';
+    const sm=document.createElement('summary'); sm.innerHTML=IC('lightbulb')+' 시계 + 영어책 풀이 자세히 보기'; det.appendChild(sm);
+    const hb=document.createElement('div'); hb.className='hint-body';
+    hb.innerHTML='<b>① 시계의 "L - R" → 안쪽 방 비밀번호</b><br>'
+      +'· 영어책에서 <b>L = left(왼쪽)</b>, <b>R = right(오른쪽)</b><br>'
+      +'· 그래서 "L - R" 은 <b>(왼쪽에서 본 수) − (오른쪽에서 본 수)</b> 라는 뜻<br>'
+      +'· "종이 아코디언" 자료를 <b>왼쪽</b>에서 보면 6123, <b>오른쪽</b>에서 보면 4718<br>'
+      +'· 6123 − 4718 = <b>1405</b><br><br>'
+      +'<b>② UV 램프가 켜진 뒤 시계의 "E = O" → 도어락</b><br>'
+      +'· 영어책에서 <b>E = escape(탈출)</b>, <b>O = opposite(반대)</b><br>'
+      +'· 즉 "탈출 = 반대" → <b>색을 반대로 뒤집어 읽으면 된다</b><br>'
+      +'· UV 시계의 <b>보라색↔흰색</b>을 서로 바꿔 읽으면 <b>2419</b>';
+    det.appendChild(hb); wrap.appendChild(det);
     return wrap;
   },
   // act5 논리퍼즐(A시트) — 6항목 × 5부지 풀이표 (직접 채우는 스크래치패드)
@@ -3076,7 +3089,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v95';
+var APP_VERSION='v96';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
