@@ -1529,7 +1529,11 @@ TEST_JUMPS: [
   // 전체 방 지도(미리 그려둠, 방문 시 해금) — 손으로 짠 ACT_ROOMS 기반
   renderRoomMap(rooms, g, summary, btn){
     const seen=this.seenKw||new Set();
-    const isOpen=r=>r.k.some(k=>seen.has(k));
+    const directOpen=r=>r.k.some(k=>seen.has(k));
+    const childrenOf=name=>rooms.filter(x=>x.p===name);
+    // 더 안쪽 장소에 도달했다면 경로상의 장소들도 거쳐온 것 → 해금. 시작 지점(루트)은 항상 해금.
+    const descOpen=r=>childrenOf(r.n).some(c=>directOpen(c)||descOpen(c));
+    const isOpen=r=>r.p===null || directOpen(r) || descOpen(r);
     const hereKw=this.here||this.lastKw;
     const isHere=r=>r.k.includes(hereKw);
     const openCt=rooms.filter(isOpen).length;
@@ -3070,7 +3074,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v93';
+var APP_VERSION='v94';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
