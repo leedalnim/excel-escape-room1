@@ -1899,7 +1899,7 @@ TEST_JUMPS: [
     const tools=document.getElementById('sheetTools');
     if(tools){ const isInvite=(s.name==='초대장');
       tools.innerHTML = isInvite
-        ? '<div class="sheet-hint">💡 오른쪽 색칠 그림은 옆으로 누운 <b>입장 키워드(7글자 알파벳)</b>입니다. 고개를 오른쪽으로 90° 기울여 읽어보세요. (대·소문자 무관)</div>'
+        ? '<div class="sheet-hint">💡 입장권에 있는 키워드를 입력하세요. (대·소문자 무관)</div>'
         : '';
     }
     const card=document.querySelector('.sheet-card');
@@ -3070,7 +3070,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v92';
+var APP_VERSION='v93';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
