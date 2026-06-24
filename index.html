@@ -1302,10 +1302,10 @@ TEST_JUMPS: [
       const dict = this.data.levels[l];
       if(dict && Object.prototype.hasOwnProperty.call(dict,kw)) return dict[kw];
     }
-    // fallback: scan every level (covers acts whose branch step isn't code-driven)
+    // fallback: 미래 레벨을 "가장 가까운 단계부터" 조회 (예전엔 최상위부터라, 초반에 종료 직전 지문이 떠 버튼/단서가 빠지는 혼란이 있었음)
     // strict 모드(본문 단어 강조 판정)에서는 미래 레벨을 미리 보여주지 않음 → 스포일러 방지
     if(!strict){
-      for(let l=this.data.levels.length-1; l>this.level; l--){
+      for(let l=this.level+1; l<this.data.levels.length; l++){
         const dict = this.data.levels[l];
         if(dict && Object.prototype.hasOwnProperty.call(dict,kw)) return dict[kw];
       }
@@ -3035,6 +3035,13 @@ function relabelData(o){
       .replace(/(시애틀의 7월 말은[\s\S]*?)\(\s*\?\s*\/\s*힌트1\s*\)/, '$1(노르빈 뮤지엄 / 힌트1)')
       // [버그2] 응모하기 흐름 안내 — 팜플렛 응모권 폼을 작성·제출하도록 명시
       .replace(/아직 응모권의 모든 칸을 정확하게 입력하지 않았다\./, '아직 응모권의 모든 칸을 정확하게 입력하지 않았다.\n\n※ "팜플렛" 자료를 열어 응모권 칸을 채운 뒤, 폼 하단의 "응모하기" 버튼을 누르세요.')
+      // [act4 L0] 독방 내부 탐색 지점을 숨은 키워드 → 보이는 선택지로 노출 (쇠파이프 등 아이템 확보 경로 안내)
+      .replace(/(하늘이 살짝 보이는 창문이 있다\.)\s*\n\s*\(\s*\?\s*\)/, '$1\n\n(침대 / 세면대 / 창문 / 유리창)')
+      .replace(/(얇은 이불이 하나 있다\.)\s*\n\s*\(\s*\?\s*\/\s*독방\s*\)/, '$1\n\n(철제 프레임 / 얇은 이불 / 독방)')
+      .replace(/(손거울이 못에 걸려있고,\s*\n\s*간단히 씻을 수 있다\.)\s*\n\s*\(\s*\?\s*\/\s*독방\s*\)/, '$1\n\n(손거울 / 독방)')
+      .replace(/(창문 밖의 나무가 울창하다\.)\s*\n\s*\(\s*\?\s*\/\s*독방\s*\)/, '$1\n\n(나무 / 독방)')
+      // [act4 L0] 유리창 상황: 무엇으로 깨야 하는지 단서 추가
+      .replace(/(유리창 너머에는 게시판이 보인다\.\s*\n\s*복도에는 아무도 없는 것 같다\.)/, '$1\n\n단단하고 긴 무언가로 유리창을 깨야 할 것 같다. (침대의 녹슨 철제 프레임은?)')
       // 위 제거로 생긴 빈 줄 정리
       .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
@@ -3063,7 +3070,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v91';
+var APP_VERSION='v92';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
