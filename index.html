@@ -3046,6 +3046,8 @@ function relabelData(o){
       .replace(/(창문 밖의 나무가 울창하다\.)\s*\n\s*\(\s*\?\s*\/\s*독방\s*\)/, '$1\n\n(나무 / 독방)')
       // [act4 L0] 유리창 상황: 무엇으로 깨야 하는지 단서 추가
       .replace(/(유리창 너머에는 게시판이 보인다\.\s*\n\s*복도에는 아무도 없는 것 같다\.)/, '$1\n\n단단하고 긴 무언가로 유리창을 깨야 할 것 같다. (침대의 녹슨 철제 프레임은?)')
+      // [act3] 응모 직후 로비(레벨1): 분위기가 달라졌음을 알려 다시 둘러보도록 유도
+      .replace(/(로비에는 직원도 관람객도 아무도 없다\.)/, '$1\n\n응모를 마치고 나니 아까와는 무언가 달라진 듯하다. 전시관들을 다시 둘러봐야겠다.')
       // 위 제거로 생긴 빈 줄 정리
       .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
@@ -3074,7 +3076,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v94';
+var APP_VERSION='v95';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
