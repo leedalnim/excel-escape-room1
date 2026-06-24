@@ -438,6 +438,12 @@
   .bd-row{display:flex;gap:14px;justify-content:center}
   .bd-cell{display:grid;grid-auto-rows:7px;gap:1px}
   .bd-cell span{display:block;width:7px;height:7px}
+  /* UV 시계 숫자판 */
+  .uv-wrap{margin-top:12px;text-align:center}
+  .uv-panel{display:inline-flex;justify-content:center;padding:14px 18px;background:#2a1640;border-radius:8px;margin:6px auto}
+  .uv-row{display:flex;gap:12px}
+  .uv-digit{display:grid;grid-template-columns:repeat(3,9px);grid-auto-rows:9px;gap:1px}
+  .uv-digit span{display:block;width:9px;height:9px}
   /* ===== Design revival: themed documents ===== */
   .sheet-card{transition:background .3s,border-color .3s}
   .sheet-card h3{display:flex;align-items:center;justify-content:center!important;gap:10px;color:var(--gold)!important;font-family:var(--serif)!important;font-size:21px!important}
@@ -1952,7 +1958,7 @@ TEST_JUMPS: [
     const grid=this._accGrid();
     const wrap=document.createElement('div'); wrap.className='acc-wrap';
     const note=document.createElement('div'); note.className='sheet-hint';
-    note.innerHTML='💡 인쇄·가위 없이 확인할 수 있어요. 종이를 아코디언처럼 접었다고 생각하고, <b>왼쪽</b>·<b>오른쪽</b>에서 기울여 보세요.<br>여기서 나온 두 숫자는 <b>시계의 L·R 표기</b>(영어책 참고)와 연결됩니다.';
+    note.innerHTML='💡 종이를 아코디언처럼 접었다고 생각하고 <b>왼쪽</b>·<b>오른쪽</b>에서 기울여 보세요.<br><b>왼쪽에서 본 수</b>와 <b>오른쪽에서 본 수</b>를 순서대로 이어 붙이면 <b>안쪽 방 비밀번호</b>입니다.';
     wrap.appendChild(note);
     const paper=document.createElement('div'); paper.className='acc-paper';
     const W=grid.length?grid[0].length:0;
@@ -1967,9 +1973,9 @@ TEST_JUMPS: [
     const setOn=(b)=>{ btns.forEach(x=>x.classList.toggle('on', x===b)); };
     const mk=(txt,cls,fn)=>{ const b=document.createElement('button'); b.className='acc-btn'; b.textContent=txt;
       b.onclick=()=>{ paper.className='acc-paper'+(cls?' '+cls:''); fn(b); setOn(b); }; btns.push(b); bar.appendChild(b); return b; };
-    mk('← 왼쪽에서 보기','fold-left',()=>{ view.innerHTML=this._accNum('6123','#2f55c8'); cap.textContent='왼쪽에서 본 숫자'; });
+    mk('← 왼쪽에서 보기','fold-left',()=>{ view.innerHTML=this._accNum('14','#2f55c8'); cap.textContent='왼쪽에서 본 수'; });
     mk('정면','',()=>{ view.innerHTML=''; cap.textContent=''; });
-    mk('오른쪽에서 보기 →','fold-right',()=>{ view.innerHTML=this._accNum('4718','#c80051'); cap.textContent='오른쪽에서 본 숫자'; });
+    mk('오른쪽에서 보기 →','fold-right',()=>{ view.innerHTML=this._accNum('05','#c80051'); cap.textContent='오른쪽에서 본 수'; });
     wrap.appendChild(bar); wrap.appendChild(view); wrap.appendChild(cap);
     return wrap;
   },
@@ -1989,6 +1995,13 @@ TEST_JUMPS: [
     let h='<div class="bd-row">';
     for(const ch of String(digits)){ const d=F[ch]||F['0']; h+='<div class="bd-cell" style="grid-template-columns:repeat(5,7px)">';
       for(let r=-1;r<=5;r++){ for(let c=-1;c<=3;c++){ const inD=(r>=0&&r<5&&c>=0&&c<3&&d[r][c]==='1'); h+=sp(inD?'transparent':color); } } h+='</div>'; }
+    return h+'</div>'; },
+  // UV 시계 숫자판: 색을 반전(보라↔흰색)하면 숫자가 드러남
+  _uvDigits(num, inv){ const F=this._bdFont(); const purple='#7030A0', white='#efe9f5';
+    const fig=inv?purple:white, bg=inv?white:purple; const sp=b=>'<span style="background:'+b+'"></span>';
+    let h='<div class="uv-row">';
+    for(const ch of String(num)){ const d=F[ch]||F['0']; h+='<div class="uv-digit">';
+      for(let r=0;r<5;r++)for(let c=0;c<3;c++) h+=sp(d[r][c]==='1'?fig:bg); h+='</div>'; }
     return h+'</div>'; },
   buildNoticeBoard(){
     const wrap=document.createElement('div'); wrap.className='board-wrap';
@@ -2010,7 +2023,6 @@ TEST_JUMPS: [
     const s=(this.data.sheets&&this.data.sheets['96'])||{};
     const cells=[...String(s.html||'').matchAll(/<td[^>]*>([^<]+)<\/td>/g)].map(m=>m[1].trim()).filter(Boolean);
     const dateRaw=cells[0]||'2023.07.31 / MON';
-    const marks=cells.slice(1);
     const dparts=dateRaw.split('/').map(x=>x.trim());
     const wrap=document.createElement('div'); wrap.className='clock-wrap';
     const face=document.createElement('div'); face.className='clock-face';
@@ -2021,25 +2033,23 @@ TEST_JUMPS: [
     const pin=document.createElement('span'); pin.className='clock-pin';
     const c=document.createElement('div'); c.className='clock-center';
     c.innerHTML='<b>'+this.esc(dparts[0]||'')+'</b>'+(dparts[1]?'<span>'+this.esc(dparts[1])+'</span>':'');
-    marks.forEach((mk,i)=>{ const e=document.createElement('div'); e.className='clock-mark m'+i; e.textContent=mk; face.appendChild(e); });
     face.appendChild(hh); face.appendChild(mh); face.appendChild(pin); face.appendChild(c);
     wrap.appendChild(face);
-    const cap=document.createElement('div'); cap.className='sheet-hint'; cap.style.marginTop='10px';
-    cap.innerHTML='💡 시계에 적힌 <b>L·R</b>(그리고 UV 이후의 <b>E=O</b>)은 <b>영어책</b>을 참고해 해석하세요.';
-    wrap.appendChild(cap);
-    const det=document.createElement('details'); det.className='hint-acc'; det.style.marginTop='8px';
-    const sm=document.createElement('summary'); sm.innerHTML=IC('lightbulb')+' 시계 + 영어책 풀이 자세히 보기'; det.appendChild(sm);
-    const hb=document.createElement('div'); hb.className='hint-body';
-    hb.innerHTML='<b>① 시계의 "L - R" → 안쪽 방 비밀번호</b><br>'
-      +'· 영어책에서 <b>L = left(왼쪽)</b>, <b>R = right(오른쪽)</b><br>'
-      +'· 그래서 "L - R" 은 <b>(왼쪽에서 본 수) − (오른쪽에서 본 수)</b> 라는 뜻<br>'
-      +'· "종이 아코디언" 자료를 <b>왼쪽</b>에서 보면 6123, <b>오른쪽</b>에서 보면 4718<br>'
-      +'· 6123 − 4718 = <b>1405</b><br><br>'
-      +'<b>② UV 램프가 켜진 뒤 시계의 "E = O" → 도어락</b><br>'
-      +'· 영어책에서 <b>E = escape(탈출)</b>, <b>O = opposite(반대)</b><br>'
-      +'· 즉 "탈출 = 반대" → <b>색을 반대로 뒤집어 읽으면 된다</b><br>'
-      +'· UV 시계의 <b>보라색↔흰색</b>을 서로 바꿔 읽으면 <b>2419</b>';
-    det.appendChild(hb); wrap.appendChild(det);
+    // UV 램프가 켜진 뒤(레벨2+)에만 숫자판 노출: 색을 반전해 읽으면 도어락 번호
+    if(this.level>=2){
+      const ul=document.createElement('div'); ul.className='sheet-hint'; ul.style.marginTop='10px';
+      ul.innerHTML='🔦 <b>UV 램프가 켜지자 시계 숫자판에 색이 나타났다.</b> 아래 버튼으로 <b>색을 반전</b>해 읽으면 <b>도어락 비밀번호</b>입니다.';
+      wrap.appendChild(ul);
+      const uv=document.createElement('div'); uv.className='uv-wrap';
+      const panel=document.createElement('div'); panel.className='uv-panel';
+      let inv=false; const drawUV=()=>{ panel.innerHTML=this._uvDigits('2419', inv); };
+      const ub=document.createElement('button'); ub.className='acc-btn'; ub.style.marginTop='8px';
+      const setTxt=()=>ub.textContent=inv?'↩ 원래 색으로':'🔁 색 반전해서 보기';
+      ub.onclick=()=>{ inv=!inv; drawUV(); setTxt(); };
+      drawUV(); setTxt();
+      uv.appendChild(panel); uv.appendChild(ub);
+      wrap.appendChild(uv);
+    }
     return wrap;
   },
   // act5 논리퍼즐(A시트) — 6항목 × 5부지 풀이표 (직접 채우는 스크래치패드)
@@ -3035,6 +3045,11 @@ function relabelData(o){
       .replace(/-\s*((?:자료|아이템)\s*코드\s*[:：]\s*\w+)\s*-/g,'$1')
       // 종이 아코디언: "인쇄해서 접으세요" 물리 안내 → 화면 내 자료(71)로 안내
       .replace(/자료는 직접 인쇄하여 아코디언처럼 접어보셔야 합니다\./g,'아래 "종이 아코디언" 자료를 열고 "왼쪽에서 보기 / 오른쪽에서 보기"로 확인하세요.\n\n자료 코드 : 71')
+      // [단순화] 안쪽 방(1405): 종이 아코디언만으로 — 시계 L-R·영어책 연결 제거
+      .replace(/인쇄한 종이를 아코디언으로 접은 뒤,[\s\S]*?6123-4718=1405/, '종이 아코디언을 왼쪽에서 보면 14, 오른쪽에서 보면 05.\n두 수를 순서대로 이어 붙이면 1405.')
+      .replace(/유치원생 밀랍인형 가방 안에 있는 쪽지와,\s*\n\s*로비에 위치한 시계를 참조하여 비밀번호를 추측하세요\.\s*\n/, '')
+      // [단순화] 도어락(2419): UV 시계 색 반전만으로 — "E=O / 탈출=반대 / 영어책" 제거
+      .replace(/시계의 하단에는 E = O라고 적혀있으며,[\s\S]*?시계의 켜진 부분을 반대로 생각해볼까요\?/, 'UV 램프가 켜지면 시계 숫자판에 보라색·흰색이 나타납니다.\n시계 자료를 열고 색을 반전(보라↔흰색)해서 읽어보세요.\n(시계 자료의 "색 반전" 버튼을 누르면 됩니다.)')
       // 아이템 코드 수동 입력 안내(엑셀 잔재) 제거 — 지문 속 코드 버튼 클릭으로 자동 획득·자동 저장됨
       .replace(/\n?[ \t]*(?:※\s*)?아이템 코드(?:\s*"?\w+"?)?\s*[을를]?\s*인벤토리에 입력하여\s*(?:추가|저장)하세요\.[ \t]*/g,'')
       .replace(/\n?[ \t]*상세\s?설명에 아이템 코드를 입력하면 내용을 확인할 수 있습니다\.[ \t]*/g,'')
@@ -3089,7 +3104,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v96';
+var APP_VERSION='v97';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
