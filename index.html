@@ -2000,8 +2000,10 @@ TEST_JUMPS: [
       for(let r=-1;r<=5;r++){ for(let c=-1;c<=3;c++){ const inD=(r>=0&&r<5&&c>=0&&c<3&&d[r][c]==='1'); h+=sp(inD?'transparent':color); } } h+='</div>'; }
     return h+'</div>'; },
   // UV 시계 숫자판: 색을 반전(보라↔흰색)하면 숫자가 드러남
-  _uvDigits(num, inv){ const F=this._bdFont(); const purple='#7030A0', white='#efe9f5';
-    const fig=inv?purple:white, bg=inv?white:purple; const sp=b=>'<span style="background:'+b+'"></span>';
+  // reveal=false: 보라색 위 비슷한 보라(저대비) → 숫자 잘 안 보임. reveal=true: 흰 글자(선명) → 숫자 드러남
+  _uvDigits(num, reveal){ const F=this._bdFont(); const sp=b=>'<span style="background:'+b+'"></span>';
+    const bg = reveal ? '#180c2c' : '#7030A0';
+    const fig = reveal ? '#ffffff' : '#7838a2';
     let h='<div class="uv-row">';
     for(const ch of String(num)){ const d=F[ch]||F['0']; h+='<div class="uv-digit">';
       for(let r=0;r<5;r++)for(let c=0;c<3;c++) h+=sp(d[r][c]==='1'?fig:bg); h+='</div>'; }
@@ -2035,14 +2037,14 @@ TEST_JUMPS: [
     // UV 램프가 켜진 뒤(레벨2+)에만 숫자판 노출: 색을 반전해 읽으면 도어락 번호
     if(this.level>=2){
       const ul=document.createElement('div'); ul.className='sheet-hint'; ul.style.marginTop='10px';
-      ul.innerHTML='🔦 <b>UV 램프가 켜지자 시계 숫자판에 색이 나타났다.</b> 아래 버튼으로 <b>색을 반전</b>해 읽으면 <b>도어락 비밀번호</b>입니다.';
+      ul.innerHTML='🔦 <b>UV 램프가 켜지자 시계 숫자판에 색이 칠해졌다.</b> 그냥은 잘 안 보이니, 아래 버튼으로 <b>색을 반전</b>해 읽으세요.<br>여기서 나온 숫자는 <b>「나가기 → 도어락」</b>에 입력하면 됩니다.';
       wrap.appendChild(ul);
       const uv=document.createElement('div'); uv.className='uv-wrap';
       const panel=document.createElement('div'); panel.className='uv-panel';
-      let inv=false; const drawUV=()=>{ panel.innerHTML=this._uvDigits('2419', inv); };
+      let reveal=false; const drawUV=()=>{ panel.innerHTML=this._uvDigits('2419', reveal); };
       const ub=document.createElement('button'); ub.className='acc-btn'; ub.style.marginTop='8px';
-      const setTxt=()=>ub.textContent=inv?'↩ 원래 색으로':'🔁 색 반전해서 보기';
-      ub.onclick=()=>{ inv=!inv; drawUV(); setTxt(); };
+      const setTxt=()=>ub.textContent=reveal?'↩ 원래대로':'🔁 색 반전해서 보기';
+      ub.onclick=()=>{ reveal=!reveal; drawUV(); setTxt(); };
       drawUV(); setTxt();
       uv.appendChild(panel); uv.appendChild(ub);
       wrap.appendChild(uv);
@@ -3089,6 +3091,9 @@ function relabelData(o){
       // [act3 1관] 숨은 키워드(캔버스·보자기)를 보이는 선택지로 — 관람·생년월일 확인 동선 노출
       .replace(/(여러 캔버스에 스[^\n]*\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/g, '$1\n\n(캔버스 / 로비)')
       .replace(/(첫번째 그림 : "탄생"[\s\S]*?)\(\s*\?\s*\/\s*더보기\s*\)/g, '$1(보자기 / 더보기)')
+      // [act3 출구] 나가기의 숨은 키워드(도어락)를 보이는 선택지로 — UV 숫자 입력 위치 안내
+      .replace(/(아무래도 이 곳에 갇힌 것 같다\.\s*\n\s*도어락이 붙어있다\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/, '$1\n\n(도어락 / 로비)')
+      .replace(/(도어락이 정상 작동한다\.\s*\n\s*얼른 나가야겠어\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/, '$1\n\n(도어락 / 로비)')
       // 위 제거로 생긴 빈 줄 정리
       .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
@@ -3120,7 +3125,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v102';
+var APP_VERSION='v103';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
