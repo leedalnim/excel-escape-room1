@@ -2017,15 +2017,14 @@ TEST_JUMPS: [
     const wrap=document.createElement('div'); wrap.className='board-wrap';
     const title=document.createElement('div'); title.className='board-title'; title.textContent='📌 직원 게시판';
     const note=document.createElement('div'); note.className='sheet-hint';
-    note.innerHTML='💡 <b>「왼쪽 두 그림의 합」 − 「케어룸 호실 숫자」 = 비밀번호</b>';
+    note.innerHTML='💡 <b>「그림의 숫자」 − 「케어룸 호실 숫자」 = 비밀번호</b>';
     wrap.appendChild(title); wrap.appendChild(note);
     const pic=(label,cap,artHtml)=>{ const box=document.createElement('div'); box.className='board-pic';
       const l=document.createElement('div'); l.className='board-piclbl'; l.textContent=label;
       const a=document.createElement('div'); a.innerHTML=artHtml;
       const c=document.createElement('div'); c.className='board-cap'; c.textContent=cap;
       box.appendChild(l); box.appendChild(a); box.appendChild(c); return box; };
-    wrap.appendChild(pic('왼쪽 위 그림','한자처럼 보이지만 가운데를 기준으로 좌우 대칭입니다. 왼쪽 절반만 읽어보세요.', this._bdSym('3958','#3a2c14')));
-    wrap.appendChild(pic('왼쪽 아래 그림','도형들 사이의 빈 공간(구멍)을 읽어보세요.', this._bdNeg('5212','#4E2A26')));
+    wrap.appendChild(pic('게시판 그림','한자처럼 보이지만 가운데를 기준으로 좌우 대칭입니다. 왼쪽 절반만 읽으면 숫자가 보여요.', this._bdSym('9170','#3a2c14')));
     return wrap;
   },
   // act3 시계(B시트) — 벽에 걸린 "디지털" 시계 (날짜 표시 + UV 숫자판)
@@ -3101,6 +3100,9 @@ function relabelData(o){
       // [act3 1관] 숨은 키워드(캔버스·보자기)를 보이는 선택지로 — 관람·생년월일 확인 동선 노출
       .replace(/(여러 캔버스에 스[^\n]*\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/g, '$1\n\n(캔버스 / 로비)')
       .replace(/(첫번째 그림 : "탄생"[\s\S]*?)\(\s*\?\s*\/\s*더보기\s*\)/g, '$1(보자기 / 더보기)')
+      // [act4 게시판 단순화] 두 그림 → 한 그림(9170): 정답1·힌트1-2 문구를 한 그림 기준으로
+      .replace(/왼쪽 위 그림 : 3958[\s\S]*?3958 \+ 5212 - 102 = 9068/, '게시판 그림의 숫자 : 9170\n내 방 호수 : 102 (102를 거울로 보면 501처럼 보입니다.)\n\n9170 - 102 = 9068')
+      .replace(/게시판 기준으로,[\s\S]*?\(\s*왼쪽 위\s*\/\s*왼쪽 아래\s*\/\s*호수\s*\/\s*정답1\s*\/\s*도어락\s*\)/, '게시판 그림은 좌우 대칭이라, 왼쪽 절반만 읽으면 숫자가 보입니다.\n그 숫자에서 "내 방 호수"를 빼면 도어락 비밀번호예요.\n호수를 어떻게 보는지 모르겠다면 "호수"를 확인하세요.\n\n바로 정답을 보려면 정답1을 입력하세요.\n\n(호수 / 정답1 / 도어락)')
       // [act3 출구] 나가기의 숨은 키워드(도어락)를 보이는 선택지로 — UV 숫자 입력 위치 안내
       .replace(/(아무래도 이 곳에 갇힌 것 같다\.\s*\n\s*도어락이 붙어있다\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/, '$1\n\n(도어락 / 로비)')
       .replace(/(도어락이 정상 작동한다\.\s*\n\s*얼른 나가야겠어\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/, '$1\n\n(도어락 / 로비)')
@@ -3135,7 +3137,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v106';
+var APP_VERSION='v107';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
