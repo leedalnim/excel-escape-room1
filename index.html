@@ -536,6 +536,7 @@
     color:var(--gold);font-size:18px;cursor:pointer;transition:.15s}
   .ctrl-btn:hover{background:#363c4b;transform:translateY(-1px)}
   .brk-grid{margin:0 auto 10px;border-collapse:separate;border-spacing:4px}
+  .brk-num{font-size:11px;font-weight:700;color:var(--gold);line-height:1;margin-bottom:2px}
   .brk-led{display:inline-block;width:11px;height:11px;border-radius:50%;background:#3a3f4b;transition:.2s}
   .brk-led.on{background:var(--ok);box-shadow:0 0 7px rgba(106,143,95,.7)}
   .brk-sw{width:42px;height:30px;border-radius:5px;border:1px solid #4a4f5b;background:#23262e;
@@ -1891,10 +1892,10 @@ TEST_JUMPS: [
     if(widget){
       html = (this.act==='act3' && code==='82')
         ? '<div class="brk-info"><b>[분전함 작동법]</b><br>'
-          +'· 5×5, 25개 차단기 중 총 <b>15개</b>를 ON으로.<br>'
-          +'· 각 가로·세로줄 끝 표시등이 <b>모두 초록</b>이면 작동.<br>'
-          +'· 줄의 ON 개수가 딱 맞으면 그 줄 끝에 초록불, 하나라도 틀리면 빨간불.<br>'
-          +'· 가로줄끼리·세로줄끼리 ON 개수는 서로 겹치지 않습니다.</div>'
+          +'· 각 가로·세로 줄 끝에 적힌 <b>숫자 = 그 줄에서 켤 차단기 개수</b>입니다.<br>'
+          +'· 그 개수에 <b>딱 맞게</b> 켜면 줄 끝 표시등이 초록, 많거나 적으면 빨강.<br>'
+          +'· 위치는 자유지만 <b>가로 숫자와 세로 숫자를 동시에</b> 만족시켜야 합니다.<br>'
+          +'· 모든 표시등이 초록이 되면 작동! (총 15개)</div>'
         : '';
     }
     // act3 시계(B시트)는 위젯 없이 빈 표만 → 시계판으로 대체
@@ -2189,14 +2190,17 @@ TEST_JUMPS: [
     const already = this.level>=2;
     let done=already;
     if(already){ for(let r=0;r<5;r++)for(let c=0;c<5;c++) grid[r][c]=sol[r][c]; }
-    const status=document.createElement('div'); status.className='mg-status'; status.textContent='차단기를 올리고 내려, 가로·세로 표시등을 모두 초록으로 만드세요.';
+    // 각 가로·세로 줄에 켜야 할 차단기 "개수"(정답 패턴의 줄별 합) — 표시등은 개수가 맞으면 초록
+    const rowTarget=sol.map(row=>row.reduce((a,b)=>a+b,0));            // [3,4,2,5,1]
+    const colTarget=[0,1,2,3,4].map(c=>sol.reduce((a,row)=>a+row[c],0)); // [4,3,5,2,1]
+    const status=document.createElement('div'); status.className='mg-status'; status.textContent='각 줄(가로·세로) 끝의 숫자만큼 차단기를 켜세요. 모든 표시등이 초록이면 작동합니다.';
     const result=document.createElement('div'); result.className='mg-result';
     const tbl=document.createElement('table'); tbl.className='brk-grid';
     const colLed=[]; const rowLed=[]; const sw=[];
     const update=()=>{
       let all=true;
-      for(let r=0;r<5;r++){ let rm=true; for(let c=0;c<5;c++){ if(grid[r][c]!==sol[r][c]) rm=false; } rowLed[r].className='brk-led '+(rm?'on':''); if(!rm) all=false; }
-      for(let c=0;c<5;c++){ let cm=true; for(let r=0;r<5;r++){ if(grid[r][c]!==sol[r][c]) cm=false; } colLed[c].className='brk-led '+(cm?'on':''); if(!cm) all=false; }
+      for(let r=0;r<5;r++){ let cnt=0; for(let c=0;c<5;c++) cnt+=grid[r][c]; const ok=(cnt===rowTarget[r]); rowLed[r].className='brk-led '+(ok?'on':''); if(!ok) all=false; }
+      for(let c=0;c<5;c++){ let cnt=0; for(let r=0;r<5;r++) cnt+=grid[r][c]; const ok=(cnt===colTarget[c]); colLed[c].className='brk-led '+(ok?'on':''); if(!ok) all=false; }
       for(let r=0;r<5;r++)for(let c=0;c<5;c++){ sw[r][c].className='brk-toggle '+(grid[r][c]?'on':''); }
       result.className='mg-result'+(all?' win':'');
       result.textContent=all?(already?'✓ 전원 복구 완료':'✓ 전원 복구! 잠시 후 자동으로 진행됩니다…'):'';
@@ -2210,11 +2214,17 @@ TEST_JUMPS: [
         }, 1000);
       }
     };
-    // header row (col leds)
+    // header row (목표 개수 + col leds)
     const h=document.createElement('tr'); h.appendChild(document.createElement('th'));
-    for(let c=0;c<5;c++){ const th=document.createElement('th'); const l=document.createElement('span'); l.className='brk-led'; colLed.push(l); th.appendChild(l); h.appendChild(th); }
+    for(let c=0;c<5;c++){ const th=document.createElement('th');
+      const num=document.createElement('div'); num.className='brk-num'; num.textContent=colTarget[c];
+      const l=document.createElement('span'); l.className='brk-led'; colLed.push(l);
+      th.appendChild(num); th.appendChild(l); h.appendChild(th); }
     tbl.appendChild(h);
-    for(let r=0;r<5;r++){ const tr=document.createElement('tr'); const th=document.createElement('th'); const l=document.createElement('span'); l.className='brk-led'; rowLed.push(l); th.appendChild(l); tr.appendChild(th); sw[r]=[];
+    for(let r=0;r<5;r++){ const tr=document.createElement('tr'); const th=document.createElement('th');
+      const num=document.createElement('div'); num.className='brk-num'; num.textContent=rowTarget[r];
+      const l=document.createElement('span'); l.className='brk-led'; rowLed.push(l);
+      th.appendChild(num); th.appendChild(l); tr.appendChild(th); sw[r]=[];
       for(let c=0;c<5;c++){ const td=document.createElement('td'); const b=document.createElement('button'); b.className='brk-toggle'; b.innerHTML='<span class="brk-lever"></span>'; sw[r][c]=b;
         b.onclick=((R,C)=>()=>{ grid[R][C]^=1; update(); })(r,c); td.appendChild(b); tr.appendChild(td); }
       tbl.appendChild(tr); }
@@ -3111,7 +3121,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v99';
+var APP_VERSION='v100';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
