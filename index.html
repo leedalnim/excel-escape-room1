@@ -2302,8 +2302,8 @@ TEST_JUMPS: [
     const uniq=[...new Set(nums)];
     return uniq.length===1 ? uniq[0] : null;
   },
-  buildLock(n,story){
-    const answer=this.lockAnswer(story||'',n);
+  buildLock(n,story,answerOverride){
+    const answer=answerOverride||this.lockAnswer(story||'',n);
     const wrap=document.createElement('div'); wrap.className='lock-widget';
     const ico=document.createElement('div'); ico.className='lock-ico'; ico.textContent='🔒';
     const disp=document.createElement('div'); disp.className='lock-display';
@@ -2650,8 +2650,12 @@ TEST_JUMPS: [
     // 자물쇠/도어락 지문 → 그래픽 잠금장치 위젯 (명시적 'N자리' 입력 지문에만)
     // 위젯이 길어 힌트/선택지를 가리지 않도록, 실제 추가는 선택지 렌더 이후로 미룬다.
     let lockEl=null;
+    // act4 블라인드 도어락: 만져서 누르는 4자리(게시판으로 구한 9068) → 키패드 제공
+    if(this.act==='act4' && /만져서 누를 수는 있다/.test(story)){
+      lockEl=this.buildLock(4, story, '9068');
+    }
     const dm=/([1-9])\s*자리/.exec(story);
-    if(dm && !/^(힌트|정답)/.test(echoKw||'') && !/획득\s*[\]】]/.test(story) &&
+    if(!lockEl && dm && !/^(힌트|정답)/.test(echoKw||'') && !/획득\s*[\]】]/.test(story) &&
        !/풀고|열렸|열고|들어왔|들어간|해제/.test(story) &&
        /자물쇠|도어락|비밀번호|암호|숫자/.test(story)){
       // 정답이 도출되지만 그 코드가 진행 지문으로 연결되지 않으면(시트 위젯으로 푸는 키패드 등)
@@ -3131,7 +3135,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v105';
+var APP_VERSION='v106';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
