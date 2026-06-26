@@ -1631,7 +1631,7 @@ TEST_JUMPS: [
     g.appendChild(tree);
   },
   openMap(){
-    if(!this.places.length) return;
+    if(!ACT_ROOMS[this.act] && !this.places.length) return;
     this.renderPlaces();
     document.getElementById('mapModal').classList.add('on');
   },
@@ -3065,8 +3065,10 @@ function relabelData(o){
       .replace(/(입장 키워드 말씀 주시겠습니까\?)/g, '$1\n\n※ 입장 키워드는 받은 "초대장" 자료 안에 숨어 있는 것 같다. 자료를 꼼꼼히 살펴보자.')
       // [H] 만 나이 계산용 생년월일을 기억하도록 메모 유도
       .replace(/(자수로 숫자가 적혀있었다\.\s*\n\s*1986\.11\.30\.)\s*\n\s*\(\s*캔버스\s*\)/g, '$1\n\n※ 이 생년월일은 나중에 필요할지도 모른다.\n\n(캔버스)')
-      // [버그1] 서점 "나가기" 무한 루프 — 갈 곳(노르빈 뮤지엄)을 보이는 선택지로 노출
-      .replace(/(시애틀의 7월 말은[\s\S]*?)\(\s*\?\s*\/\s*힌트1\s*\)/, '$1(노르빈 뮤지엄 / 힌트1)')
+      // [버그1→퀴즈화] 서점 "나가기": 노르빈 뮤지엄 버튼 제거, 입장 키워드(SCALPEL) 퀴즈로 입장하도록 유도
+      .replace(/시애틀의 7월 말은[\s\S]*/, '시애틀의 7월 말은\n다시 사무실로 돌아가고 싶을 정도로\n너무나도 덥다.\n\n전시회장 입구에 도착했다. 직원이 입장 키워드를 묻는다.\n받은 "초대장(입장권)"을 열어 키워드를 찾아 입력하자.\n\n(힌트2)')
+      // 힌트2의 노르빈 뮤지엄 버튼도 제거(퀴즈 정답으로 입장)
+      .replace(/\(\s*노르빈 뮤지엄\s*\/\s*정답2\s*\)/, '(정답2)')
       // [버그2] 응모하기 흐름 안내 — 팜플렛 응모권 폼을 작성·제출하도록 명시
       .replace(/아직 응모권의 모든 칸을 정확하게 입력하지 않았다\./, '아직 응모권의 모든 칸을 정확하게 입력하지 않았다.\n\n※ "팜플렛" 자료를 열어 응모권 칸을 채운 뒤, 폼 하단의 "응모하기" 버튼을 누르세요.')
       // [act4 L0] 독방 내부 탐색 지점을 숨은 키워드 → 보이는 선택지로 노출 (쇠파이프 등 아이템 확보 경로 안내)
@@ -3109,7 +3111,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v98';
+var APP_VERSION='v99';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
