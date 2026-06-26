@@ -1793,8 +1793,8 @@ TEST_JUMPS: [
       +'<button class="pamph-submit" onclick="Game.submitRaffle()">응모하기</button>'
       +'<details class="hint-acc pamph-hint"><summary>'+IC('lightbulb')+' 힌트 보기</summary>'
       +'<div class="hint-body">'
-      +'· Q1 — 1관(본능)에서 그녀의 <b>중학생 시절</b>을 그린 작품의 제목을 찾으세요.<br>'
-      +'· Q2 — 자료에 적힌 <b>출생연도</b>를 오늘 날짜 기준으로 빼서 만 나이를 계산하세요.<br>'
+      +'· Q1 — 1관(본능) 캔버스 → "더보기"에서 그녀의 <b>중학생 시절</b>을 그린 작품의 제목을 찾으세요.<br>'
+      +'· Q2 — 1관 캔버스 → "보자기"의 <b>생년월일</b>을, <b>로비 시계의 날짜(=전시 당일)</b> 기준으로 빼서 만 나이를 계산하세요.<br>'
       +'· Q3 — 2관·병원 사건 자료에서 피해자의 <b>사망 원인(사인)</b>을 확인하세요.<br>'
       +'· 성함·주소 — 받은 <b>편지(초대장)</b> 끝부분에 적힌 수신인 정보를 그대로 옮겨 적으세요.'
       +'</div></details>'
@@ -1806,11 +1806,10 @@ TEST_JUMPS: [
     // 모바일 한글 입력(IME) 미확정 글자를 확정시키기 위해 포커스 해제 후 값을 읽음
     // (이게 없으면 첫 클릭이 마지막 글자를 못 읽어 "한 번 더 눌러야 통과"되는 현상 발생)
     try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
-    // 만 나이는 오늘 날짜 기준으로 계산(생일 1986.11.30) — 날짜가 흘러도 정답이 어긋나지 않게. 옛 정답 36도 허용
-    const ageNow=(()=>{ const t=new Date(); let a=t.getFullYear()-1986; const m=t.getMonth()+1,d=t.getDate(); if(m<11||(m===11&&d<30)) a--; return a; })();
+    // Q2 만 나이: 게임 속 "오늘"=로비 시계 날짜(2023.07.31), 생일 1986.11.30 → 만 36세. (흔한 실수 37도 허용)
     const fields=[
       ['raf-q1', v=>nrm(v)===nrm('소원')],
-      ['raf-q2', v=>{ const n=nrm(v); return n===String(ageNow)||n==='36'; }],
+      ['raf-q2', v=>{ const n=nrm(v); return n==='36'||n==='37'; }],
       ['raf-q3', v=>nrm(v)===nrm('독살')],
       ['raf-name', v=>nrm(v)===nrm('렉스터 벨킨')],
       ['raf-addr', v=>nrm(v)===nrm('56 3rd Ave, Seattle')]
@@ -3090,6 +3089,9 @@ function relabelData(o){
       .replace(/(유리창 너머에는 게시판이 보인다\.\s*\n\s*복도에는 아무도 없는 것 같다\.)/, '$1\n\n단단하고 긴 무언가로 유리창을 깨야 할 것 같다. (침대의 녹슨 철제 프레임은?)')
       // [act3] 응모 직후 로비(레벨1): 분위기가 달라졌음을 알려 다시 둘러보도록 유도
       .replace(/(로비에는 직원도 관람객도 아무도 없다\.)/, '$1\n\n응모를 마치고 나니 아까와는 무언가 달라진 듯하다. 전시관들을 다시 둘러봐야겠다.')
+      // [act3 1관] 숨은 키워드(캔버스·보자기)를 보이는 선택지로 — 관람·생년월일 확인 동선 노출
+      .replace(/(여러 캔버스에 스[^\n]*\.)\s*\n\s*\(\s*\?\s*\/\s*로비\s*\)/g, '$1\n\n(캔버스 / 로비)')
+      .replace(/(첫번째 그림 : "탄생"[\s\S]*?)\(\s*\?\s*\/\s*더보기\s*\)/g, '$1(보자기 / 더보기)')
       // 위 제거로 생긴 빈 줄 정리
       .replace(/\n{3,}/g,'\n\n');
     // 시계 안내가 있는데 여는 버튼이 없으면, 시계(96) 자료를 항상 열 수 있도록 버튼을 붙임
@@ -3121,7 +3123,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v100';
+var APP_VERSION='v101';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
