@@ -644,6 +644,8 @@
   .dclock{display:inline-block;background:#0e1016;border:2px solid #2a3340;border-radius:10px;padding:16px 28px;margin:6px auto;text-align:center;box-shadow:inset 0 0 18px rgba(0,0,0,.6)}
   .dclock-date{font-family:var(--mono);font-weight:700;font-size:30px;letter-spacing:.07em;color:#ff5b5b;text-shadow:0 0 8px rgba(255,70,70,.55)}
   .dclock-day{font-family:var(--mono);font-size:14px;letter-spacing:.34em;color:#ff8a6a;margin-top:7px}
+  .dclock-num{font-family:var(--mono);font-weight:700;font-size:34px;letter-spacing:.12em;color:#c8b3ff;text-shadow:0 0 10px rgba(150,110,255,.6);transition:.3s}
+  .dclock-num.uv-hidden{color:#3a2c52;text-shadow:none;filter:blur(3px);opacity:.7}
   .clock-face{position:relative;width:230px;height:230px;flex:0 0 auto;border-radius:50%;
     background:radial-gradient(circle at 50% 38%,#f7f3e8,#e3dcc8 70%,#cdc4ab);
     border:9px solid #2a2722;box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 0 22px rgba(120,100,60,.25)}
@@ -1731,10 +1733,13 @@ TEST_JUMPS: [
   },
   // 지문 → HTML (아이템/시트 코드 버튼 + 쉬운모드 단어 탭/밑줄)
   renderStoryHtml(story){
+    // 엔딩/계속 지문은 서술 전용 → 탭 단어 강조(밑줄) 끔
+    const noTap=/To Be Continued|에서\s*계속|♠\s*엔딩/i.test(story);
+    const wrap=noTap ? (s=>this.esc(s)) : (s=>this.wrapWords(s));
     const re=/(아이템\s*코드\s*[:：]\s*\w+|(?:시트|자료)\s*코드\s*[:：]\s*\w+)/g;
     let out='', last=0, m;
-    while((m=re.exec(story))){ out+=this.wrapWords(story.slice(last,m.index)); out+=this.codeButton(m[0]); last=re.lastIndex; }
-    out+=this.wrapWords(story.slice(last));
+    while((m=re.exec(story))){ out+=wrap(story.slice(last,m.index)); out+=this.codeButton(m[0]); last=re.lastIndex; }
+    out+=wrap(story.slice(last));
     return out;
   },
   codeButton(s){
@@ -2031,23 +2036,24 @@ TEST_JUMPS: [
     const dparts=dateRaw.split('/').map(x=>x.trim());
     const wrap=document.createElement('div'); wrap.className='clock-wrap';
     const dig=document.createElement('div'); dig.className='dclock';
-    dig.innerHTML='<div class="dclock-date">'+this.esc(dparts[0]||'')+'</div>'
-      +(dparts[1]?'<div class="dclock-day">'+this.esc(dparts[1])+'</div>':'');
-    wrap.appendChild(dig);
-    // UV 램프가 켜진 뒤(레벨2+)에만 숫자판 노출: 색을 반전해 읽으면 도어락 번호
     if(this.level>=2){
+      // UV 램프가 켜진 뒤: 시계 표시부(날짜 자리)에 도어락 번호가 흐릿하게 떠오름 → 버튼으로 또렷하게
+      dig.innerHTML='<div class="dclock-num uv-hidden">2419</div><div class="dclock-day">UV LIGHT</div>';
+      wrap.appendChild(dig);
       const ul=document.createElement('div'); ul.className='sheet-hint'; ul.style.marginTop='10px';
-      ul.innerHTML='🔦 <b>UV 램프가 켜지자 시계 숫자판에 색이 칠해졌다.</b> 그냥은 잘 안 보이니, 아래 버튼으로 <b>색을 반전</b>해 읽으세요.<br>여기서 나온 숫자는 <b>「나가기 → 도어락」</b>에 입력하면 됩니다.';
+      ul.innerHTML='🔦 <b>UV 램프가 켜지자 시계 표시부에 숫자가 흐릿하게 떠올랐다.</b> 아래 버튼으로 <b>또렷하게</b> 보세요.<br>이 숫자를 <b>「나가기 → 도어락」</b>에 입력하면 됩니다.';
       wrap.appendChild(ul);
-      const uv=document.createElement('div'); uv.className='uv-wrap';
-      const panel=document.createElement('div'); panel.className='uv-panel';
-      let reveal=false; const drawUV=()=>{ panel.innerHTML=this._uvDigits('2419', reveal); };
+      const numEl=dig.querySelector('.dclock-num');
+      let reveal=false;
       const ub=document.createElement('button'); ub.className='acc-btn'; ub.style.marginTop='8px';
-      const setTxt=()=>ub.textContent=reveal?'↩ 원래대로':'🔁 색 반전해서 보기';
-      ub.onclick=()=>{ reveal=!reveal; drawUV(); setTxt(); };
-      drawUV(); setTxt();
-      uv.appendChild(panel); uv.appendChild(ub);
-      wrap.appendChild(uv);
+      const setTxt=()=>ub.textContent=reveal?'↩ 다시 흐리게':'🔁 색 반전해서 또렷하게 보기';
+      ub.onclick=()=>{ reveal=!reveal; numEl.classList.toggle('uv-hidden',!reveal); setTxt(); };
+      setTxt();
+      wrap.appendChild(ub);
+    } else {
+      dig.innerHTML='<div class="dclock-date">'+this.esc(dparts[0]||'')+'</div>'
+        +(dparts[1]?'<div class="dclock-day">'+this.esc(dparts[1])+'</div>':'');
+      wrap.appendChild(dig);
     }
     return wrap;
   },
@@ -3125,7 +3131,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v103';
+var APP_VERSION='v105';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
