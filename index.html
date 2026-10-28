@@ -13,7 +13,7 @@
 <link rel="icon" href="assets/icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="비밀 방탈출">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
     --mono:'IBM Plex Mono','Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
+  html,body{height:100%;overflow:hidden;background:#13151c}
   body{
     background:var(--bg); color:var(--ink); font-family:var(--body);
     line-height:1.75; overflow:hidden; letter-spacing:.01em;
@@ -115,14 +115,18 @@
   @keyframes rise{to{opacity:1;transform:translateY(0)}}
   #start .eyebrow,#start h1,#start .lead,.acts{transform:translateY(18px)}
 
-  /* ===== Game layout ===== */
-  #game{display:none;height:100%;}
+  /* ===== Game layout =====
+     iOS(16+) 홈 화면 PWA: 상태바가 투명해 내용이 그 밑까지 깔리는데, 상태바 바로 밑에
+     "스크롤되는 영역"이 있으면 iOS가 그 자리에 흐림(리퀴드 글래스)을 덮는다.
+     #game 자체를 상태바 아래(top:env(safe-area-inset-top))에서 시작하는 고정 상자로 만들어,
+     내부의 모든 스크롤 영역(.scroll, .aside)이 상태바 밑이 아니라 거기서 "시작"하게 한다. */
+  #game{display:none;position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;bottom:0;}
   #game.live{display:grid;grid-template-columns:1fr 340px;}
-  .stage{display:flex;flex-direction:column;height:100vh;height:100dvh;min-width:0;
+  .stage{display:flex;flex-direction:column;height:100%;min-width:0;
     background:linear-gradient(180deg,#1a1d25,#14161d);}
   .topbar{display:flex;flex-direction:column;gap:6px;padding:14px 26px;border-bottom:1px solid var(--line);
     background:rgba(13,14,19,.7);backdrop-filter:blur(4px);
-    padding-top:calc(14px + env(safe-area-inset-top,0px));flex:none;position:relative;z-index:10}
+    flex:none;position:relative;z-index:10}
   .topbar-main{display:flex;align-items:center;gap:14px;width:100%}
   .tb-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
   .topbar .badge{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--accent);text-transform:uppercase}
@@ -249,7 +253,7 @@
 
   /* ===== Side panel ===== */
   .aside{background:linear-gradient(180deg,var(--panel),var(--bg2));border-left:1px solid var(--line);
-    display:flex;flex-direction:column;height:100vh;height:100dvh;overflow-y:auto}
+    display:flex;flex-direction:column;height:100%;overflow-y:auto}
   .aside::-webkit-scrollbar{width:8px}.aside::-webkit-scrollbar-thumb{background:#2a2d38;border-radius:8px}
   .sect{padding:20px 20px 20px;border-bottom:1px solid var(--line)}
   .sect h4{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--ink-dim);
@@ -793,14 +797,14 @@
   .aside-backdrop.open{display:block}
   @media(max-width:880px){
     #game.live{grid-template-columns:1fr}
-    .aside{position:fixed;right:0;top:0;height:100%;width:min(330px,86vw);transform:translateX(100%);
+    .aside{position:fixed;right:0;top:env(safe-area-inset-top,0px);bottom:0;height:auto;width:min(330px,86vw);transform:translateX(100%);
       transition:transform .3s ease;z-index:31;box-shadow:-12px 0 40px rgba(0,0,0,.5)}
     .aside.open{transform:translateX(0)}
     .aside-toggle{display:inline-block!important;color:var(--gold)!important;border-color:var(--gold)!important}
     .aside-close{display:block;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);
       font-family:var(--mono);font-size:12px;padding:10px;cursor:pointer;border-radius:0}
     .scroll,.composer{padding-left:5%;padding-right:5%}
-    .topbar{gap:6px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+    .topbar{gap:6px;padding:12px 14px}
     .topbar-main{flex-wrap:wrap;gap:8px}
     .topbar .title{font-size:16px}
     .topbar .step{font-size:10px}
@@ -3137,7 +3141,7 @@ renderIcons();
   if(window.lucide) renderIcons(); else window.addEventListener('load', renderIcons);
 })();
 // 빌드 버전 표시 (폰 화면 하단에 노출 → 최신 반영 여부 즉시 확인용)
-var APP_VERSION='v107';
+var APP_VERSION='v108';
 try{ var _vt=document.getElementById('verTag'); if(_vt) _vt.textContent=APP_VERSION; }catch(e){}
 // PWA: 서비스 워커 등록 (앱처럼 설치·오프라인 플레이) + 새 버전 자동 갱신
 if('serviceWorker' in navigator){
